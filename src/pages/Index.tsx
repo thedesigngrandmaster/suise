@@ -1,14 +1,32 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { useState, useEffect } from "react";
+import { SplashScreen } from "@/components/SplashScreen";
+import { OnboardingFlow } from "@/components/OnboardingFlow";
+import { HomeFeed } from "@/components/HomeFeed";
+
+type AppState = "splash" | "onboarding" | "home";
 
 const Index = () => {
-  return (
-    <div className="flex min-h-screen items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="mb-4 text-4xl font-bold">Welcome to Your Blank App</h1>
-        <p className="text-xl text-muted-foreground">Start building your amazing project here!</p>
-      </div>
-    </div>
-  );
+  const [appState, setAppState] = useState<AppState>("splash");
+
+  // Auto-transition from splash after a few seconds if user doesn't tap
+  useEffect(() => {
+    if (appState === "splash") {
+      const timer = setTimeout(() => {
+        setAppState("onboarding");
+      }, 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [appState]);
+
+  if (appState === "splash") {
+    return <SplashScreen onComplete={() => setAppState("onboarding")} />;
+  }
+
+  if (appState === "onboarding") {
+    return <OnboardingFlow onComplete={() => setAppState("home")} />;
+  }
+
+  return <HomeFeed />;
 };
 
 export default Index;
