@@ -21,10 +21,15 @@ const navItems: NavItem[] = [
   { id: "home", icon: Home, label: "Home" },
   { id: "vault", icon: Archive, label: "Vault" },
   { id: "explore", icon: Compass, label: "Explore" },
-  { id: "notifications", icon: Bell, label: "Notifications" },
   { id: "connect", icon: Users, label: "Connect" },
   { id: "chat", icon: MessageCircle, label: "Chat" },
-  { id: "settings", icon: Settings, label: "Settings" },
+];
+
+const mobileNavItems: NavItem[] = [
+  { id: "home", icon: Home, label: "Home" },
+  { id: "vault", icon: Archive, label: "Vault" },
+  { id: "explore", icon: Compass, label: "Explore" },
+  { id: "connect", icon: Users, label: "Connect" },
 ];
 
 interface DashboardLayoutProps {
@@ -57,7 +62,7 @@ export function DashboardLayout({ children, activeTab, onTabChange }: DashboardL
     <div className="min-h-screen bg-background flex w-full">
       {/* Desktop Sidebar */}
       <aside className={cn(
-        "hidden lg:flex flex-col border-r border-border sticky top-0 h-screen transition-all duration-300",
+        "hidden lg:flex flex-col border-r border-border fixed top-0 left-0 h-screen transition-all duration-300 bg-background z-40",
         collapsed ? "w-20" : "w-64 xl:w-72"
       )}>
         <div className="p-4">
@@ -66,7 +71,7 @@ export function DashboardLayout({ children, activeTab, onTabChange }: DashboardL
           </button>
         </div>
 
-        <nav className="flex-1 px-3 py-4">
+        <nav className="flex-1 px-3 py-4 overflow-y-auto">
           <ul className="space-y-1">
             {navItems.map((item) => (
               <DesktopNavItem
@@ -75,9 +80,25 @@ export function DashboardLayout({ children, activeTab, onTabChange }: DashboardL
                 isActive={activeTab === item.id}
                 collapsed={collapsed}
                 onClick={() => handleTabChange(item.id)}
-                badge={item.id === "notifications" ? unreadCount : undefined}
               />
             ))}
+          </ul>
+
+          {/* Notifications item */}
+          <ul className="mt-4 space-y-1">
+            <DesktopNavItem
+              item={{ id: "notifications", icon: Bell, label: "Notifications" }}
+              isActive={activeTab === "notifications"}
+              collapsed={collapsed}
+              onClick={() => handleTabChange("notifications")}
+              badge={unreadCount}
+            />
+            <DesktopNavItem
+              item={{ id: "settings", icon: Settings, label: "Settings" }}
+              isActive={activeTab === "settings"}
+              collapsed={collapsed}
+              onClick={() => handleTabChange("settings")}
+            />
           </ul>
 
           <div className="mt-6 px-2">
@@ -102,11 +123,14 @@ export function DashboardLayout({ children, activeTab, onTabChange }: DashboardL
           )}
         </div>
       </aside>
+      
+      {/* Spacer for fixed sidebar */}
+      <div className={cn("hidden lg:block shrink-0 transition-all duration-300", collapsed ? "w-20" : "w-64 xl:w-72")} />
 
       {/* Main content */}
       <div className="flex-1 flex flex-col min-h-screen">
         {/* Mobile header */}
-        <header className="lg:hidden sticky top-0 bg-background/95 backdrop-blur-sm border-b border-border z-40">
+        <header className="lg:hidden fixed top-0 left-0 right-0 bg-background/95 backdrop-blur-sm border-b border-border z-40">
           <div className="flex items-center justify-between px-4 py-3">
             <BrandHeader />
             <div className="flex items-center gap-2">
@@ -121,13 +145,18 @@ export function DashboardLayout({ children, activeTab, onTabChange }: DashboardL
               >
                 <Bell className="w-5 h-5" />
                 {unreadCount > 0 && (
-                  <span className="absolute top-1 right-1 w-2 h-2 bg-destructive rounded-full" />
+                  <span className="absolute -bottom-1 -right-1 min-w-5 h-5 px-1 bg-secondary text-secondary-foreground text-xs rounded-full flex items-center justify-center font-bold">
+                    {unreadCount > 9 ? "9+" : unreadCount}
+                  </span>
                 )}
               </Button>
               <UserAvatar />
             </div>
           </div>
         </header>
+        
+        {/* Spacer for fixed mobile header */}
+        <div className="lg:hidden h-14" />
 
         {/* Page content */}
         <main className="flex-1 pb-20 lg:pb-0">
@@ -135,9 +164,9 @@ export function DashboardLayout({ children, activeTab, onTabChange }: DashboardL
         </main>
 
         {/* Mobile bottom nav */}
-        <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-background border-t border-border z-50">
-          <div className="flex items-center justify-around h-16 max-w-lg mx-auto relative">
-            {navItems.slice(0, 2).map((item) => (
+        <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-background border-t border-border z-50 h-16 pb-safe">
+          <div className="flex items-center justify-around h-full w-full relative">
+            {mobileNavItems.slice(0, 2).map((item) => (
               <MobileNavItem
                 key={item.id}
                 item={item}
@@ -158,15 +187,14 @@ export function DashboardLayout({ children, activeTab, onTabChange }: DashboardL
               </Button>
             </div>
 
-            <div className="w-16" />
+            <div className="w-14" />
 
-            {navItems.slice(2, 4).map((item) => (
+            {mobileNavItems.slice(2, 4).map((item) => (
               <MobileNavItem
                 key={item.id}
                 item={item}
                 isActive={activeTab === item.id}
                 onClick={() => handleTabChange(item.id)}
-                badge={item.id === "notifications" ? unreadCount : undefined}
               />
             ))}
           </div>
@@ -216,8 +244,8 @@ function DesktopNavItem({ item, isActive, collapsed, onClick, badge }: DesktopNa
               isActive ? "stroke-[2.5px] text-secondary" : "stroke-[1.5px]"
             )}
           />
-        {badge && badge > 0 && (
-            <span className="absolute -top-1 -right-1 min-w-4 h-4 px-1 bg-secondary text-secondary-foreground text-xs rounded-full flex items-center justify-center font-bold">
+          {badge && badge > 0 && (
+            <span className="absolute -bottom-1 -right-1 min-w-5 h-5 px-1 bg-secondary text-secondary-foreground text-xs rounded-full flex items-center justify-center font-bold">
               {badge > 9 ? "9+" : badge}
             </span>
           )}
@@ -225,7 +253,7 @@ function DesktopNavItem({ item, isActive, collapsed, onClick, badge }: DesktopNa
         {!collapsed && (
           <span className={cn(
             "text-lg transition-all duration-200",
-            isActive ? "font-bold" : "font-medium"
+            isActive ? "font-bold text-secondary" : "font-medium"
           )}>
             {item.label}
           </span>
@@ -258,7 +286,7 @@ function MobileNavItem({ item, isActive, onClick, badge }: MobileNavItemProps) {
       className={cn(
         "flex flex-col items-center gap-0.5 p-2 rounded-xl transition-colors",
         isActive
-          ? "text-foreground"
+          ? "text-secondary"
           : "text-muted-foreground hover:text-foreground"
       )}
     >
@@ -271,14 +299,14 @@ function MobileNavItem({ item, isActive, onClick, badge }: MobileNavItemProps) {
           isActive && "stroke-[2.5px] text-secondary-foreground"
         )} />
         {badge && badge > 0 && (
-          <span className="absolute -top-1 -right-1 min-w-4 h-4 px-1 bg-secondary text-secondary-foreground text-xs rounded-full flex items-center justify-center font-bold">
+          <span className="absolute -bottom-1 -right-1 min-w-5 h-5 px-1 bg-secondary text-secondary-foreground text-xs rounded-full flex items-center justify-center font-bold">
             {badge > 9 ? "9+" : badge}
           </span>
         )}
       </div>
       <span className={cn(
         "text-xs",
-        isActive ? "font-bold" : "font-medium"
+        isActive ? "font-bold text-secondary" : "font-medium"
       )}>{item.label}</span>
     </button>
   );
