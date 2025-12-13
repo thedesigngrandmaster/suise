@@ -10,7 +10,7 @@ export function StreakBadge({ count, className }: StreakBadgeProps) {
   return (
     <div
       className={cn(
-        "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary border-2 border-foreground shadow-neubrutalist-sm streak-glow",
+        "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary streak-glow",
         className
       )}
     >
