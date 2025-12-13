@@ -91,6 +91,23 @@ export function CollaboratorsManager({ albumId, ownerId, isOwner, onUpdate }: Co
     if (error) {
       toast.error("Failed to add collaborator", { description: error.message });
     } else {
+      // Send notification to the invited user
+      const { data: currentUser } = await supabase.auth.getUser();
+      const { data: albumData } = await supabase
+        .from("albums")
+        .select("title")
+        .eq("id", albumId)
+        .single();
+
+      await supabase.from("notifications").insert({
+        user_id: targetUser.id,
+        type: "collaboration_invite",
+        title: "Album Collaboration Invite",
+        message: `You've been invited to collaborate on "${albumData?.title || "an album"}"`,
+        related_user_id: currentUser?.user?.id,
+        related_album_id: albumId,
+      });
+
       toast.success(`@${targetUser.username} added as collaborator!`);
       setSearchUsername("");
       await fetchCollaborators();
