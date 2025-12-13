@@ -1,53 +1,163 @@
+import { useState } from "react";
 import { Button } from "./ui/button";
-import { Mail } from "lucide-react";
-import { toast } from "sonner";
+import { Input } from "./ui/input";
+import { Label } from "./ui/label";
+import { Mail, ArrowLeft, Eye, EyeOff } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { z } from "zod";
 
 interface ZKLoginModalProps {
   onLogin: () => void;
 }
 
+const emailSchema = z.string().email("Please enter a valid email");
+const passwordSchema = z.string().min(6, "Password must be at least 6 characters");
+
 export function ZKLoginModal({ onLogin }: ZKLoginModalProps) {
-  const handleGoogleLogin = () => {
-    toast.success("Logged in with Google!", {
-      description: "Welcome to Suise!",
-    });
-    onLogin();
+  const { signInWithGoogle, signInWithEmail, signUpWithEmail } = useAuth();
+  const [showEmailForm, setShowEmailForm] = useState(false);
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [displayName, setDisplayName] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
+  const [loading, setLoading] = useState(false);
+
+  const validateForm = () => {
+    const newErrors: { email?: string; password?: string } = {};
+    
+    const emailResult = emailSchema.safeParse(email);
+    if (!emailResult.success) {
+      newErrors.email = emailResult.error.errors[0].message;
+    }
+    
+    const passwordResult = passwordSchema.safeParse(password);
+    if (!passwordResult.success) {
+      newErrors.password = passwordResult.error.errors[0].message;
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
-  const handleEmailLogin = () => {
-    toast.success("Logged in with Email!", {
-      description: "Welcome to Suise!",
-    });
-    onLogin();
+  const handleGoogleLogin = async () => {
+    try {
+      await signInWithGoogle();
+    } catch (error) {
+      // Error handled in hook
+    }
   };
 
-  const handleAppleLogin = () => {
-    toast.success("Logged in with Apple!", {
-      description: "Welcome to Suise!",
-    });
-    onLogin();
+  const handleEmailSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!validateForm()) return;
+    
+    setLoading(true);
+    let result;
+    
+    if (isSignUp) {
+      result = await signUpWithEmail(email, password, displayName);
+    } else {
+      result = await signInWithEmail(email, password);
+    }
+    
+    setLoading(false);
+    if (!result.error) {
+      onLogin();
+    }
   };
 
-  const handleFacebookLogin = () => {
-    toast.success("Logged in with Facebook!", {
-      description: "Welcome to Suise!",
-    });
-    onLogin();
-  };
+  if (showEmailForm) {
+    return (
+      <div className="w-full max-w-sm p-6 bg-card rounded-2xl">
+        <button
+          onClick={() => setShowEmailForm(false)}
+          className="flex items-center gap-2 text-muted-foreground hover:text-foreground mb-4 transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Back
+        </button>
 
-  const handleXLogin = () => {
-    toast.success("Logged in with X!", {
-      description: "Welcome to Suise!",
-    });
-    onLogin();
-  };
+        <h3 className="text-xl font-bold font-bricolage mb-4">
+          {isSignUp ? "Create Account" : "Welcome Back"}
+        </h3>
 
-  const handleDiscordLogin = () => {
-    toast.success("Logged in with Discord!", {
-      description: "Welcome to Suise!",
-    });
-    onLogin();
-  };
+        <form onSubmit={handleEmailSubmit} className="space-y-4">
+          {isSignUp && (
+            <div>
+              <Label htmlFor="displayName">Display Name</Label>
+              <Input
+                id="displayName"
+                type="text"
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+                placeholder="Your name"
+                className="mt-1"
+              />
+            </div>
+          )}
+          
+          <div>
+            <Label htmlFor="email">Email</Label>
+            <Input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="you@example.com"
+              className="mt-1"
+            />
+            {errors.email && (
+              <p className="text-destructive text-sm mt-1">{errors.email}</p>
+            )}
+          </div>
+
+          <div>
+            <Label htmlFor="password">Password</Label>
+            <div className="relative mt-1">
+              <Input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+              >
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
+            {errors.password && (
+              <p className="text-destructive text-sm mt-1">{errors.password}</p>
+            )}
+          </div>
+
+          <Button
+            type="submit"
+            variant="suise"
+            className="w-full"
+            disabled={loading}
+          >
+            {loading ? "Please wait..." : isSignUp ? "Create Account" : "Sign In"}
+          </Button>
+        </form>
+
+        <p className="text-center text-sm text-muted-foreground mt-4">
+          {isSignUp ? "Already have an account?" : "Don't have an account?"}{" "}
+          <button
+            onClick={() => setIsSignUp(!isSignUp)}
+            className="text-secondary font-medium hover:underline"
+          >
+            {isSignUp ? "Sign In" : "Sign Up"}
+          </button>
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full max-w-sm p-6 bg-card rounded-2xl">
@@ -66,7 +176,7 @@ export function ZKLoginModal({ onLogin }: ZKLoginModalProps) {
         <Button
           variant="outline"
           className="w-full justify-start gap-3 h-12 text-base font-medium"
-          onClick={handleEmailLogin}
+          onClick={() => setShowEmailForm(true)}
         >
           <Mail className="w-5 h-5" />
           Continue with Email
@@ -76,10 +186,12 @@ export function ZKLoginModal({ onLogin }: ZKLoginModalProps) {
         <Button
           variant="outline"
           className="w-full justify-start gap-3 h-12 text-base font-medium"
-          onClick={handleAppleLogin}
+          onClick={() => {}}
+          disabled
         >
           <AppleIcon />
           Continue with Apple
+          <span className="text-xs text-muted-foreground ml-auto">Soon</span>
         </Button>
       </div>
 
@@ -88,25 +200,30 @@ export function ZKLoginModal({ onLogin }: ZKLoginModalProps) {
 
       {/* Social icons */}
       <div className="flex justify-center gap-4">
-        <SocialIconButton onClick={handleFacebookLogin}>
+        <SocialIconButton onClick={() => {}} disabled>
           <FacebookIcon />
         </SocialIconButton>
-        <SocialIconButton onClick={handleXLogin}>
+        <SocialIconButton onClick={() => {}} disabled>
           <XIcon />
         </SocialIconButton>
-        <SocialIconButton onClick={handleDiscordLogin}>
+        <SocialIconButton onClick={() => {}} disabled>
           <DiscordIcon />
         </SocialIconButton>
       </div>
+
+      <p className="text-center text-xs text-muted-foreground mt-4">
+        More login options coming soon
+      </p>
     </div>
   );
 }
 
-function SocialIconButton({ children, onClick }: { children: React.ReactNode; onClick: () => void }) {
+function SocialIconButton({ children, onClick, disabled }: { children: React.ReactNode; onClick: () => void; disabled?: boolean }) {
   return (
     <button
       onClick={onClick}
-      className="w-12 h-12 rounded-full border border-border flex items-center justify-center hover:bg-muted transition-colors"
+      disabled={disabled}
+      className="w-12 h-12 rounded-full border border-border flex items-center justify-center hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
     >
       {children}
     </button>
