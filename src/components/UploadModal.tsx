@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { X, Upload, Image, FolderPlus } from "lucide-react";
+import { X, Upload, Image, FolderPlus, Camera } from "lucide-react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
@@ -8,6 +8,8 @@ import { Switch } from "./ui/switch";
 import { useAlbums } from "@/hooks/useAlbums";
 import { useMemories } from "@/hooks/useMemories";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface UploadModalProps {
   isOpen: boolean;
@@ -19,7 +21,7 @@ type Mode = "select" | "upload" | "create-album";
 
 export function UploadModal({ isOpen, onClose, defaultAlbumId }: UploadModalProps) {
   const { user } = useAuth();
-  const { albums, createAlbum } = useAlbums(user?.id);
+  const { albums, createAlbum, fetchUserAlbums } = useAlbums(user?.id);
   const { uploadMemory } = useMemories();
 
   const [mode, setMode] = useState<Mode>("select");
@@ -36,6 +38,7 @@ export function UploadModal({ isOpen, onClose, defaultAlbumId }: UploadModalProp
   const [albumIsPublic, setAlbumIsPublic] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -58,22 +61,35 @@ export function UploadModal({ isOpen, onClose, defaultAlbumId }: UploadModalProp
   };
 
   const handleCreateAlbum = async () => {
-    if (!albumTitle.trim()) return;
+    if (!albumTitle.trim() || !user) return;
 
     setLoading(true);
-    const result = await createAlbum({
-      title: albumTitle,
-      description: albumDescription,
-      is_public: albumIsPublic,
-    });
+    
+    // Direct insert to ensure user.id is used
+    const { data: album, error } = await supabase
+      .from("albums")
+      .insert({
+        owner_id: user.id,
+        title: albumTitle,
+        description: albumDescription || null,
+        is_public: albumIsPublic,
+      })
+      .select()
+      .single();
 
-    if (result.album) {
-      setSelectedAlbumId(result.album.id);
-      setMode("select");
-      setAlbumTitle("");
-      setAlbumDescription("");
-      setAlbumIsPublic(false);
+    if (error) {
+      toast.error("Failed to create album", { description: error.message });
+      setLoading(false);
+      return;
     }
+
+    toast.success("Album created!");
+    setSelectedAlbumId(album.id);
+    setMode("select");
+    setAlbumTitle("");
+    setAlbumDescription("");
+    setAlbumIsPublic(false);
+    await fetchUserAlbums();
     setLoading(false);
   };
 
@@ -129,6 +145,18 @@ export function UploadModal({ isOpen, onClose, defaultAlbumId }: UploadModalProp
                   <FolderPlus className="w-4 h-4 mr-2" />
                   New Album
                 </Button>
+              </div>
+
+              <div className="flex gap-3">
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => cameraInputRef.current?.click()}
+                  disabled={!selectedAlbumId}
+                >
+                  <Camera className="w-4 h-4 mr-2" />
+                  Take Photo
+                </Button>
                 <Button
                   variant="suise"
                   className="flex-1"
@@ -136,10 +164,21 @@ export function UploadModal({ isOpen, onClose, defaultAlbumId }: UploadModalProp
                   disabled={!selectedAlbumId}
                 >
                   <Image className="w-4 h-4 mr-2" />
-                  Choose Photo
+                  Upload
                 </Button>
               </div>
 
+              {/* Camera input */}
+              <input
+                ref={cameraInputRef}
+                type="file"
+                accept="image/*"
+                capture="environment"
+                onChange={handleFileSelect}
+                className="hidden"
+              />
+              
+              {/* File upload input */}
               <input
                 ref={fileInputRef}
                 type="file"
