@@ -23,6 +23,7 @@ export interface Connection {
 export function useConnections(userId?: string) {
   const [connections, setConnections] = useState<Connection[]>([]);
   const [pendingRequests, setPendingRequests] = useState<Connection[]>([]);
+  const [sentRequests, setSentRequests] = useState<Connection[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchConnections = async () => {
@@ -42,6 +43,20 @@ export function useConnections(userId?: string) {
       setConnections(data);
     }
     setLoading(false);
+  };
+
+  const fetchSentRequests = async () => {
+    if (!userId) return;
+    
+    const { data, error } = await supabase
+      .from("connections")
+      .select("*")
+      .eq("requester_id", userId)
+      .eq("status", "pending");
+
+    if (!error && data) {
+      setSentRequests(data);
+    }
   };
 
   const fetchPendingRequests = async () => {
@@ -78,6 +93,7 @@ export function useConnections(userId?: string) {
     }
 
     toast.success("Connection request sent!");
+    await fetchSentRequests();
     return { error: null };
   };
 
@@ -113,15 +129,29 @@ export function useConnections(userId?: string) {
   useEffect(() => {
     fetchConnections();
     fetchPendingRequests();
+    fetchSentRequests();
   }, [userId]);
+
+  const hasSentRequest = (targetUserId: string) => {
+    return sentRequests.some((r) => r.addressee_id === targetUserId);
+  };
+
+  const isConnected = (targetUserId: string) => {
+    return connections.some(
+      (c) => c.requester_id === targetUserId || c.addressee_id === targetUserId
+    );
+  };
 
   return {
     connections,
     pendingRequests,
+    sentRequests,
     loading,
     sendRequest,
     acceptRequest,
     rejectRequest,
+    hasSentRequest,
+    isConnected,
     refetch: fetchConnections,
   };
 }

@@ -13,8 +13,9 @@ import { Label } from "@/components/ui/label";
 import { AlbumCard } from "@/components/AlbumCard";
 import { StreakBadge } from "@/components/StreakBadge";
 import { AvatarUpload } from "@/components/AvatarUpload";
+import { CoverPhotoUpload } from "@/components/CoverPhotoUpload";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { User, Edit, MessageCircle, UserPlus, Copy, Wallet } from "lucide-react";
+import { User, Edit, MessageCircle, UserPlus, Copy, Wallet, Clock } from "lucide-react";
 import { toast } from "sonner";
 
 interface ProfileData {
@@ -23,6 +24,7 @@ interface ProfileData {
   display_name: string | null;
   email: string | null;
   avatar_url: string | null;
+  cover_photo_url: string | null;
   bio: string | null;
   wallet_address: string | null;
   streak_count: number;
@@ -35,7 +37,7 @@ export default function Profile() {
   const { username } = useParams<{ username: string }>();
   const { user, profile: currentUserProfile, refreshProfile } = useAuth();
   const { updateProfile, getProfileByUsername } = useProfile();
-  const { sendRequest, connections } = useConnections(user?.id);
+  const { sendRequest, hasSentRequest, isConnected } = useConnections(user?.id);
   const navigate = useNavigate();
 
   const [profileData, setProfileData] = useState<ProfileData | null>(null);
@@ -121,15 +123,33 @@ export default function Profile() {
   return (
     <DashboardLayout activeTab="home" onTabChange={(tab) => navigate(`/${tab === "home" ? "" : tab}`)}>
       <div className="max-w-2xl mx-auto px-4 py-6">
+        {/* Cover Photo */}
+        {isOwnProfile ? (
+          <CoverPhotoUpload 
+            currentCoverUrl={profileData.cover_photo_url}
+            onUploadComplete={(url) => setProfileData({ ...profileData, cover_photo_url: url })}
+          />
+        ) : profileData.cover_photo_url ? (
+          <div className="w-full h-32 sm:h-48 rounded-2xl overflow-hidden mb-4">
+            <img 
+              src={profileData.cover_photo_url} 
+              alt="Cover" 
+              className="w-full h-full object-cover"
+            />
+          </div>
+        ) : (
+          <div className="w-full h-32 sm:h-48 bg-gradient-to-br from-secondary/30 to-primary/30 rounded-2xl mb-4" />
+        )}
+
         {/* Profile Header */}
-        <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 mb-8">
+        <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 mb-8 -mt-12 sm:-mt-16 relative z-10 px-4">
           {isOwnProfile ? (
             <AvatarUpload 
               currentAvatarUrl={profileData.avatar_url} 
               onUploadComplete={(url) => setProfileData({ ...profileData, avatar_url: url })}
             />
           ) : (
-            <Avatar className="w-24 h-24">
+            <Avatar className="w-24 h-24 border-4 border-background">
               <AvatarImage src={profileData.avatar_url || undefined} />
               <AvatarFallback className="bg-secondary/20">
                 <User className="w-12 h-12 text-secondary" />
@@ -215,10 +235,22 @@ export default function Profile() {
                     </Button>
                   ) : (
                     <>
-                      <Button variant="suise" onClick={handleConnect}>
-                        <UserPlus className="w-4 h-4 mr-2" />
-                        Connect
-                      </Button>
+                      {isConnected(profileData.id) ? (
+                        <Button variant="outline" disabled>
+                          <UserPlus className="w-4 h-4 mr-2" />
+                          Connected
+                        </Button>
+                      ) : hasSentRequest(profileData.id) ? (
+                        <Button variant="outline" disabled>
+                          <Clock className="w-4 h-4 mr-2" />
+                          Request Sent
+                        </Button>
+                      ) : (
+                        <Button variant="suise" onClick={handleConnect}>
+                          <UserPlus className="w-4 h-4 mr-2" />
+                          Connect
+                        </Button>
+                      )}
                       <Button
                         variant="outline"
                         onClick={() => navigate(`/chat/${profileData.id}`)}
