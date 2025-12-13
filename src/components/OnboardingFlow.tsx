@@ -135,7 +135,7 @@ function StepContent({ step }: StepContentProps) {
       {/* Image side */}
       <div className={`${isImageLeft ? "lg:order-1" : "lg:order-2"} flex justify-center`}>
         <div 
-          className="relative w-full max-w-sm aspect-square brand-shape-mask"
+          className="relative w-full max-w-md aspect-square brand-shape-mask"
           style={{
             WebkitMaskImage: `url(${step.maskShape})`,
             maskImage: `url(${step.maskShape})`,
@@ -151,7 +151,7 @@ function StepContent({ step }: StepContentProps) {
 
       {/* Text side */}
       <div className={`${isImageLeft ? "lg:order-2" : "lg:order-1"} text-center lg:text-left`}>
-        <h2 className="text-3xl lg:text-4xl font-bold font-bricolage text-foreground leading-tight">
+        <h2 className="text-3xl lg:text-4xl font-bold font-bricolage text-secondary leading-tight">
           {step.title}
         </h2>
       </div>
@@ -167,13 +167,10 @@ interface LastStepContentProps {
 function LastStepContent({ step, onLogin }: LastStepContentProps) {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center fade-in-up">
-      {/* Left side - title and image */}
+      {/* Left side - image with title below */}
       <div className="flex flex-col items-center lg:items-start gap-6">
-        <h2 className="text-3xl lg:text-4xl font-bold font-bricolage text-foreground">
-          {step.title}
-        </h2>
         <div 
-          className="relative w-full max-w-sm aspect-square brand-shape-mask"
+          className="relative w-full max-w-md aspect-square brand-shape-mask"
           style={{
             WebkitMaskImage: `url(${step.maskShape})`,
             maskImage: `url(${step.maskShape})`,
@@ -185,6 +182,9 @@ function LastStepContent({ step, onLogin }: LastStepContentProps) {
             className="w-full h-full object-cover"
           />
         </div>
+        <h2 className="text-3xl lg:text-4xl font-bold font-bricolage text-secondary text-center lg:text-left">
+          {step.title}
+        </h2>
       </div>
 
       {/* Right side - ZKLogin modal */}

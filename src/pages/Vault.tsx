@@ -1,0 +1,65 @@
+import { useState } from "react";
+import { DashboardLayout } from "@/components/DashboardLayout";
+import { useAuth } from "@/hooks/useAuth";
+import { useAlbums, Album } from "@/hooks/useAlbums";
+import { Plus, Heart, Eye, Share2, MoreHorizontal, Trash2, Edit, Users } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { UploadModal } from "@/components/UploadModal";
+import { AlbumCard } from "@/components/AlbumCard";
+import { useNavigate } from "react-router-dom";
+
+export default function Vault() {
+  const { user } = useAuth();
+  const { albums, loading, deleteAlbum } = useAlbums(user?.id);
+  const [uploadOpen, setUploadOpen] = useState(false);
+  const navigate = useNavigate();
+
+  return (
+    <DashboardLayout activeTab="vault" onTabChange={(tab) => navigate(`/${tab === "home" ? "" : tab}`)}>
+      <div className="max-w-4xl mx-auto px-4 py-6">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="text-2xl font-bold font-bricolage">Your Vault</h1>
+            <p className="text-muted-foreground">Your private memories organized by albums</p>
+          </div>
+          <Button variant="suise" onClick={() => setUploadOpen(true)}>
+            <Plus className="w-4 h-4 mr-2" />
+            New Album
+          </Button>
+        </div>
+
+        {loading ? (
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className="aspect-square bg-muted rounded-2xl animate-pulse" />
+            ))}
+          </div>
+        ) : albums.length === 0 ? (
+          <div className="text-center py-16">
+            <div className="w-24 h-24 mx-auto mb-4 bg-secondary/20 rounded-full flex items-center justify-center">
+              <Plus className="w-12 h-12 text-secondary" />
+            </div>
+            <h3 className="text-lg font-bold mb-2">No albums yet</h3>
+            <p className="text-muted-foreground mb-4">Create your first album to start saving memories</p>
+            <Button variant="suise" onClick={() => setUploadOpen(true)}>
+              Create Album
+            </Button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            {albums.map((album) => (
+              <AlbumCard
+                key={album.id}
+                album={album}
+                onClick={() => navigate(`/album/${album.id}`)}
+                onDelete={() => deleteAlbum(album.id)}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+
+      <UploadModal isOpen={uploadOpen} onClose={() => setUploadOpen(false)} />
+    </DashboardLayout>
+  );
+}
