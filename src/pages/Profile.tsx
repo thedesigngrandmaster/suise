@@ -55,12 +55,17 @@ export default function Profile() {
         const data = await getProfileByUsername(cleanUsername);
         setProfileData(data);
       } else if (user && currentUserProfile) {
+        // Redirect to proper profile URL if we have username
+        if (currentUserProfile.username) {
+          navigate(`/@${currentUserProfile.username}`, { replace: true });
+          return;
+        }
         setProfileData(currentUserProfile as ProfileData);
       }
       setLoading(false);
     };
     fetchProfile();
-  }, [cleanUsername, user, currentUserProfile]);
+  }, [cleanUsername, user, currentUserProfile, navigate]);
 
   const { albums } = useAlbums(profileData?.id);
 

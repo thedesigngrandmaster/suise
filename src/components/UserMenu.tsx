@@ -48,7 +48,7 @@ export function UserMenu() {
           <div className="absolute bottom-full left-0 mb-2 w-full min-w-[200px] bg-card rounded-xl shadow-lg border border-border z-50 overflow-hidden">
             <button
               onClick={() => {
-                navigate(`/@${profile?.username || user.id}`);
+                navigate(profile?.username ? `/@${profile.username}` : "/profile");
                 setIsOpen(false);
               }}
               className="w-full flex items-center gap-3 p-3 hover:bg-muted transition-colors"
@@ -96,7 +96,7 @@ export function UserAvatar({ onClick }: { onClick?: () => void }) {
     if (onClick) {
       onClick();
     } else {
-      navigate(`/@${profile?.username || user.id}`);
+      navigate(profile?.username ? `/@${profile.username}` : "/profile");
     }
   };
 

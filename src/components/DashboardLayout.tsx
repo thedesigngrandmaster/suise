@@ -216,8 +216,8 @@ function DesktopNavItem({ item, isActive, collapsed, onClick, badge }: DesktopNa
               isActive ? "stroke-[2.5px]" : "stroke-[1.5px]"
             )}
           />
-          {badge && badge > 0 && (
-            <span className="absolute -top-1 -right-1 w-4 h-4 bg-destructive text-destructive-foreground text-xs rounded-full flex items-center justify-center">
+        {badge && badge > 0 && (
+            <span className="absolute -top-1 -right-1 min-w-4 h-4 px-1 bg-secondary text-secondary-foreground text-xs rounded-full flex items-center justify-center font-bold">
               {badge > 9 ? "9+" : badge}
             </span>
           )}
@@ -271,7 +271,7 @@ function MobileNavItem({ item, isActive, onClick, badge }: MobileNavItemProps) {
           isActive && "stroke-[2.5px]"
         )} />
         {badge && badge > 0 && (
-          <span className="absolute -top-1 -right-1 w-4 h-4 bg-destructive text-destructive-foreground text-xs rounded-full flex items-center justify-center">
+          <span className="absolute -top-1 -right-1 min-w-4 h-4 px-1 bg-secondary text-secondary-foreground text-xs rounded-full flex items-center justify-center font-bold">
             {badge > 9 ? "9+" : badge}
           </span>
         )}
