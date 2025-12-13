@@ -1,79 +1,85 @@
 import { useState } from "react";
-import { MemoryCard } from "./MemoryCard";
-import { StreakBadge } from "./StreakBadge";
-import { DashboardLayout } from "./DashboardLayout";
-import { YoomaAvatar } from "./YoomaAvatar";
-import { Bell, Search } from "lucide-react";
-import { Button } from "./ui/button";
-
-// Sample memory data
-const sampleMemories = [
-  {
-    id: 1,
-    imageUrl: "https://images.unsplash.com/photo-1682687220742-aba13b6e50ba?w=400&h=400&fit=crop",
-    caption: "Beach sunset vibes 🌅",
-    likes: 24,
-    comments: 5,
-  },
-  {
-    id: 2,
-    imageUrl: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=400&fit=crop",
-    caption: "Mountain adventures",
-    likes: 18,
-    comments: 3,
-  },
-  {
-    id: 3,
-    imageUrl: "https://images.unsplash.com/photo-1501594907352-04cda38ebc29?w=400&h=400&fit=crop",
-    likes: 42,
-    comments: 8,
-  },
-  {
-    id: 4,
-    imageUrl: "https://images.unsplash.com/photo-1475924156734-496f6cac6ec1?w=400&h=400&fit=crop",
-    caption: "Cozy coffee mornings ☕",
-    likes: 31,
-    comments: 6,
-  },
-  {
-    id: 5,
-    imageUrl: "https://images.unsplash.com/photo-1518837695005-2083093ee35b?w=400&h=400&fit=crop",
-    caption: "City lights",
-    likes: 56,
-    comments: 12,
-  },
-  {
-    id: 6,
-    imageUrl: "https://images.unsplash.com/photo-1530789253388-582c481c54b0?w=400&h=400&fit=crop",
-    likes: 15,
-    comments: 2,
-  },
-];
+import { DashboardLayout } from "@/components/DashboardLayout";
+import { UploadModal } from "@/components/UploadModal";
+import { useAuth } from "@/hooks/useAuth";
+import { useAlbums } from "@/hooks/useAlbums";
+import { YoomaAvatar } from "@/components/YoomaAvatar";
+import { StreakBadge } from "@/components/StreakBadge";
+import { AlbumCard } from "@/components/AlbumCard";
+import { useNavigate } from "react-router-dom";
+import { cn } from "@/lib/utils";
 
 export function HomeFeed() {
-  const [activeTab, setActiveTab] = useState("home");
-  const [streakCount] = useState(7);
+  const { profile } = useAuth();
+  const { user } = useAuth();
+  const { albums } = useAlbums(user?.id);
+  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState<"for-you" | "following">("for-you");
+  const [uploadOpen, setUploadOpen] = useState(false);
+
+  const streakCount = profile?.streak_count || 0;
+  const isNewUser = !profile?.last_streak_date;
+
+  const getStreakMessage = () => {
+    if (isNewUser) {
+      return "Welcome! Start your journey by adding your first memory.";
+    }
+    if (streakCount === 0) {
+      return "Add a memory today to start your streak!";
+    }
+    if (streakCount === 1) {
+      return "You're on a 1-day streak. Keep going!";
+    }
+    if (streakCount < 7) {
+      return `You're on a ${streakCount}-day streak. Nice work!`;
+    }
+    if (streakCount < 30) {
+      return `Amazing! ${streakCount} days and counting! 🔥`;
+    }
+    return `Legendary ${streakCount}-day streak! You're unstoppable! 🏆`;
+  };
 
   return (
     <DashboardLayout
-      activeTab={activeTab}
-      onTabChange={setActiveTab}
-      onUpload={() => console.log("Upload clicked")}
+      activeTab="home"
+      onTabChange={(tab) => navigate(`/${tab === "home" ? "" : tab}`)}
     >
       <div className="max-w-2xl mx-auto px-4 py-6">
+        {/* Tabs */}
+        <div className="flex items-center justify-center gap-8 mb-6 border-b border-border">
+          <button
+            onClick={() => setActiveTab("for-you")}
+            className={cn(
+              "pb-3 font-bold transition-colors relative",
+              activeTab === "for-you"
+                ? "text-foreground"
+                : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            For You
+            {activeTab === "for-you" && (
+              <div className="absolute bottom-0 left-0 right-0 h-1 bg-secondary rounded-full" />
+            )}
+          </button>
+          <button
+            onClick={() => setActiveTab("following")}
+            className={cn(
+              "pb-3 font-bold transition-colors relative",
+              activeTab === "following"
+                ? "text-foreground"
+                : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            Following
+            {activeTab === "following" && (
+              <div className="absolute bottom-0 left-0 right-0 h-1 bg-secondary rounded-full" />
+            )}
+          </button>
+        </div>
+
         {/* Desktop header actions */}
-        <div className="hidden lg:flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold font-bricolage">Home</h1>
-          <div className="flex items-center gap-3">
-            <StreakBadge count={streakCount} />
-            <Button variant="ghost" size="icon">
-              <Search className="w-5 h-5" />
-            </Button>
-            <Button variant="ghost" size="icon" className="relative">
-              <Bell className="w-5 h-5" />
-              <span className="absolute top-1 right-1 w-2 h-2 bg-destructive rounded-full" />
-            </Button>
-          </div>
+        <div className="hidden lg:flex items-center justify-end mb-6">
+          <StreakBadge count={streakCount} />
         </div>
 
         {/* Mobile streak badge */}
@@ -81,35 +87,50 @@ export function HomeFeed() {
           <StreakBadge count={streakCount} />
         </div>
 
-        {/* Welcome message */}
-        <div className="mb-6">
-          <div className="flex items-center gap-3 p-4 bg-secondary/20 rounded-2xl">
-            <YoomaAvatar variant="celebrate" size="sm" animate />
-            <div>
-              <p className="font-bold text-foreground">Great job! 🎉</p>
-              <p className="text-sm text-muted-foreground">
-                You're on a 7-day streak. Keep it up!
+        {/* Upload CTA Card */}
+        <button
+          onClick={() => setUploadOpen(true)}
+          className="w-full mb-6 p-6 bg-gradient-to-br from-primary/20 to-secondary/20 rounded-2xl text-left hover:from-primary/30 hover:to-secondary/30 transition-colors"
+        >
+          <div className="flex items-center gap-4">
+            <YoomaAvatar variant={streakCount > 0 ? "celebrate" : "wave"} size="md" animate />
+            <div className="flex-1">
+              <p className="font-bold text-lg">{getStreakMessage()}</p>
+              <p className="text-muted-foreground">
+                {isNewUser ? "Click here to add your first memory!" : "Tap to add today's memory"}
               </p>
             </div>
           </div>
-        </div>
+        </button>
 
-        {/* Memory Grid */}
-        <div>
-          <h2 className="text-lg font-bold mb-4">Recent Memories</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            {sampleMemories.map((memory) => (
-              <MemoryCard
-                key={memory.id}
-                imageUrl={memory.imageUrl}
-                caption={memory.caption}
-                likes={memory.likes}
-                comments={memory.comments}
-              />
-            ))}
+        {/* Recent Albums */}
+        {albums.length > 0 && (
+          <div>
+            <h2 className="text-lg font-bold mb-4">Your Recent Albums</h2>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              {albums.slice(0, 6).map((album) => (
+                <AlbumCard
+                  key={album.id}
+                  album={album}
+                  onClick={() => navigate(`/album/${album.id}`)}
+                />
+              ))}
+            </div>
           </div>
-        </div>
+        )}
+
+        {albums.length === 0 && (
+          <div className="text-center py-8">
+            <YoomaAvatar variant="wave" size="lg" animate />
+            <h3 className="text-lg font-bold mt-4 mb-2">No albums yet</h3>
+            <p className="text-muted-foreground mb-4">
+              Create your first album to start saving memories!
+            </p>
+          </div>
+        )}
       </div>
+
+      <UploadModal isOpen={uploadOpen} onClose={() => setUploadOpen(false)} />
     </DashboardLayout>
   );
 }
