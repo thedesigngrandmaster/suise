@@ -1,4 +1,4 @@
-import suiseLogo from "@/assets/images/01. Suise's Logo (Mascot and Wordmark).png";
+import mascot from "@/assets/images/02. Suise's Mascot.png";
 
 interface SplashScreenProps {
   onComplete?: () => void;
@@ -12,19 +12,11 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
     >
       <div className="flex flex-col items-center gap-6 fade-in-up">
         <img 
-          src={suiseLogo} 
-          alt="Suise Logo" 
-          className="h-32 w-auto object-contain"
+          src={mascot} 
+          alt="Yooma Mascot" 
+          className="h-48 w-auto object-contain animate-pulse"
         />
-        
-        <p className="text-foreground/80 font-semibold text-lg font-bricolage">
-          Your memory vault
-        </p>
       </div>
-      
-      <p className="absolute bottom-12 text-foreground/60 text-sm font-medium animate-pulse">
-        Tap anywhere to continue
-      </p>
     </div>
   );
 }
