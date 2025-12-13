@@ -7,12 +7,11 @@ import { useConnections } from "@/hooks/useConnections";
 import { YoomaAvatar } from "@/components/YoomaAvatar";
 import { StreakBadge } from "@/components/StreakBadge";
 import { AlbumCard } from "@/components/AlbumCard";
-import { DemoAlbumCard, demoAlbums, DemoContentBanner } from "@/components/DemoContent";
 import { OnboardingTutorial } from "@/components/OnboardingTutorial";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
-import { Users } from "lucide-react";
+import { Users, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export function HomeFeed() {
@@ -26,6 +25,8 @@ export function HomeFeed() {
   const [tutorialOpen, setTutorialOpen] = useState(false);
   const [followingAlbums, setFollowingAlbums] = useState<Album[]>([]);
   const [loadingFollowing, setLoadingFollowing] = useState(false);
+  const [featuredAlbums, setFeaturedAlbums] = useState<Album[]>([]);
+  const [loadingFeatured, setLoadingFeatured] = useState(false);
 
   const streakCount = profile?.streak_count || 0;
   const isNewUser = !profile?.last_streak_date;
@@ -40,6 +41,29 @@ export function HomeFeed() {
       return () => clearTimeout(timer);
     }
   }, [isNewUser, user]);
+
+  // Fetch featured albums for "For You" (most loved, different from Explore which shows newest)
+  useEffect(() => {
+    const fetchFeatured = async () => {
+      setLoadingFeatured(true);
+      const { data, error } = await supabase
+        .from("albums")
+        .select(`
+          *,
+          owner:profiles!albums_owner_id_fkey(id, username, display_name, avatar_url, wallet_address)
+        `)
+        .eq("is_public", true)
+        .order("love_count", { ascending: false })
+        .limit(6);
+
+      if (!error && data) {
+        setFeaturedAlbums(data as Album[]);
+      }
+      setLoadingFeatured(false);
+    };
+
+    fetchFeatured();
+  }, []);
 
   // Fetch albums from connections
   useEffect(() => {
@@ -93,10 +117,6 @@ export function HomeFeed() {
       return `Amazing! ${streakCount} days and counting! 🔥`;
     }
     return `Legendary ${streakCount}-day streak! You're unstoppable! 🏆`;
-  };
-
-  const handleDemoClick = (albumId: string) => {
-    navigate(`/demo-album/${albumId}`);
   };
 
   return (
@@ -179,20 +199,34 @@ export function HomeFeed() {
           </div>
         )}
 
-        {/* Demo content for For You tab */}
+        {/* Featured albums for For You tab */}
         {activeTab === "for-you" && (
           <div>
-            <DemoContentBanner />
-            <h2 className="text-lg font-bold mb-4">Discover Amazing Memories</h2>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-              {demoAlbums.slice(0, 6).map((album) => (
-                <DemoAlbumCard
-                  key={album.id}
-                  album={album}
-                  onClick={() => handleDemoClick(album.id)}
-                />
-              ))}
-            </div>
+            <h2 className="text-lg font-bold mb-4">Featured Albums</h2>
+            {loadingFeatured ? (
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                {[...Array(6)].map((_, i) => (
+                  <div key={i} className="aspect-square bg-muted rounded-2xl animate-pulse" />
+                ))}
+              </div>
+            ) : featuredAlbums.length > 0 ? (
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                {featuredAlbums.map((album) => (
+                  <AlbumCard
+                    key={album.id}
+                    album={album}
+                    onClick={() => navigate(`/album/${album.id}`)}
+                    showOwner
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <Sparkles className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
+                <h3 className="text-lg font-bold mb-2">No albums yet</h3>
+                <p className="text-muted-foreground">Be the first to share your memories!</p>
+              </div>
+            )}
           </div>
         )}
 
