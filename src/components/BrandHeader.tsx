@@ -7,14 +7,12 @@ interface BrandHeaderProps {
 
 export function BrandHeader({ collapsed }: BrandHeaderProps) {
   return (
-    <div className="flex items-center gap-2 -ml-2">
-      <div className="p-1.5 rounded-xl border-2 border-border bg-card shadow-sm">
-        <img 
-          src={collapsed ? mascot : suiseLogo} 
-          alt="Suise" 
-          className={collapsed ? "h-8 w-auto" : "h-7 w-auto object-contain"}
-        />
-      </div>
+    <div className="flex items-center gap-2">
+      <img 
+        src={collapsed ? mascot : suiseLogo} 
+        alt="Suise" 
+        className={collapsed ? "h-8 w-auto" : "h-7 w-auto object-contain"}
+      />
     </div>
   );
 }

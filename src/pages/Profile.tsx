@@ -55,23 +55,27 @@ export default function Profile() {
   useEffect(() => {
     const fetchProfile = async () => {
       setLoading(true);
+      
       if (cleanUsername) {
+        // Fetch profile by username from URL - works for anyone
         const data = await getProfileByUsername(cleanUsername);
         setProfileData(data);
         setLoading(false);
-      } else if (user) {
-        // If no username in URL, show current user's profile
-        if (currentUserProfile) {
-          setProfileData(currentUserProfile as ProfileData);
-        }
+      } else if (user && currentUserProfile) {
+        // No username in URL, show current user's profile
+        setProfileData(currentUserProfile as ProfileData);
         setLoading(false);
-      } else {
+      } else if (!user && !cleanUsername) {
         // Not logged in and no username - redirect to auth
+        setLoading(false);
         navigate("/auth");
+      } else {
+        setLoading(false);
       }
     };
+    
     fetchProfile();
-  }, [cleanUsername, user, currentUserProfile, navigate]);
+  }, [cleanUsername, user, currentUserProfile]);
 
   const { albums } = useAlbums(profileData?.id);
 
