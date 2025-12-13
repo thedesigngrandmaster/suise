@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { UploadModal } from "@/components/UploadModal";
 import { useAuth } from "@/hooks/useAuth";
@@ -6,8 +6,11 @@ import { useAlbums } from "@/hooks/useAlbums";
 import { YoomaAvatar } from "@/components/YoomaAvatar";
 import { StreakBadge } from "@/components/StreakBadge";
 import { AlbumCard } from "@/components/AlbumCard";
+import { DemoAlbumCard, demoAlbums, DemoContentBanner } from "@/components/DemoContent";
+import { OnboardingTutorial } from "@/components/OnboardingTutorial";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 export function HomeFeed() {
   const { profile } = useAuth();
@@ -16,9 +19,21 @@ export function HomeFeed() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<"for-you" | "following">("for-you");
   const [uploadOpen, setUploadOpen] = useState(false);
+  const [tutorialOpen, setTutorialOpen] = useState(false);
 
   const streakCount = profile?.streak_count || 0;
   const isNewUser = !profile?.last_streak_date;
+
+  // Show tutorial for new users
+  useEffect(() => {
+    if (isNewUser && user && !localStorage.getItem(`tutorial-shown-${user.id}`)) {
+      const timer = setTimeout(() => {
+        setTutorialOpen(true);
+        localStorage.setItem(`tutorial-shown-${user.id}`, "true");
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [isNewUser, user]);
 
   const getStreakMessage = () => {
     if (isNewUser) {
@@ -37,6 +52,10 @@ export function HomeFeed() {
       return `Amazing! ${streakCount} days and counting! 🔥`;
     }
     return `Legendary ${streakCount}-day streak! You're unstoppable! 🏆`;
+  };
+
+  const handleDemoClick = () => {
+    toast.info("This is demo content. Create your own albums to see them here!");
   };
 
   return (
@@ -103,9 +122,9 @@ export function HomeFeed() {
           </div>
         </button>
 
-        {/* Recent Albums */}
+        {/* User's Albums */}
         {albums.length > 0 && (
-          <div>
+          <div className="mb-8">
             <h2 className="text-lg font-bold mb-4">Your Recent Albums</h2>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               {albums.slice(0, 6).map((album) => (
@@ -119,18 +138,41 @@ export function HomeFeed() {
           </div>
         )}
 
-        {albums.length === 0 && (
-          <div className="text-center py-8">
+        {/* Demo content for For You tab */}
+        {activeTab === "for-you" && (
+          <div>
+            <DemoContentBanner />
+            <h2 className="text-lg font-bold mb-4">Discover Amazing Memories</h2>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              {demoAlbums.slice(0, 6).map((album) => (
+                <DemoAlbumCard
+                  key={album.id}
+                  album={album}
+                  onClick={handleDemoClick}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Following tab empty state */}
+        {activeTab === "following" && (
+          <div className="text-center py-12">
             <YoomaAvatar variant="wave" size="lg" animate />
-            <h3 className="text-lg font-bold mt-4 mb-2">No albums yet</h3>
-            <p className="text-muted-foreground mb-4">
-              Create your first album to start saving memories!
+            <h3 className="text-lg font-bold mt-4 mb-2">No posts yet</h3>
+            <p className="text-muted-foreground">
+              Connect with friends to see their memories here!
             </p>
           </div>
         )}
       </div>
 
       <UploadModal isOpen={uploadOpen} onClose={() => setUploadOpen(false)} />
+      <OnboardingTutorial 
+        isOpen={tutorialOpen} 
+        onClose={() => setTutorialOpen(false)}
+        onStartUpload={() => setUploadOpen(true)}
+      />
     </DashboardLayout>
   );
 }
