@@ -19,7 +19,7 @@ interface UserProfile {
 
 export default function Connect() {
   const { user } = useAuth();
-  const { connections, pendingRequests, acceptRequest, rejectRequest, loading, sendRequest } = useConnections(user?.id);
+  const { connections, pendingRequests, acceptRequest, rejectRequest, loading, sendRequest, hasSentRequest, isConnected } = useConnections(user?.id);
   const navigate = useNavigate();
   const [allUsers, setAllUsers] = useState<UserProfile[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
@@ -35,7 +35,6 @@ export default function Connect() {
         .limit(50);
 
       if (!error && data) {
-        // Filter out current user
         setAllUsers(data.filter((u) => u.id !== user?.id));
       }
       setLoadingUsers(false);
@@ -44,12 +43,10 @@ export default function Connect() {
     fetchUsers();
   }, [user?.id]);
 
-  // Check if already connected or pending
+  // Check connection status
   const getConnectionStatus = (userId: string) => {
-    const isConnected = connections.some(
-      (c) => c.requester_id === userId || c.addressee_id === userId
-    );
-    if (isConnected) return "connected";
+    if (isConnected(userId)) return "connected";
+    if (hasSentRequest(userId)) return "sent";
     
     const isPending = pendingRequests.some(
       (p) => p.requester_id === userId
@@ -140,6 +137,10 @@ export default function Connect() {
                         {status === "connected" ? (
                           <span className="text-sm text-muted-foreground px-3 py-1 bg-muted rounded-full">
                             Connected
+                          </span>
+                        ) : status === "sent" ? (
+                          <span className="text-sm text-secondary px-3 py-1 bg-secondary/20 rounded-full">
+                            Request Sent
                           </span>
                         ) : status === "pending" ? (
                           <span className="text-sm text-muted-foreground px-3 py-1 bg-muted rounded-full">

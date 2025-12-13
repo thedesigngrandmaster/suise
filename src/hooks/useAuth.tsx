@@ -9,6 +9,7 @@ interface Profile {
   display_name: string | null;
   email: string | null;
   avatar_url: string | null;
+  cover_photo_url: string | null;
   bio: string | null;
   wallet_address: string | null;
   streak_count: number;
