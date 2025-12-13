@@ -213,7 +213,7 @@ function DesktopNavItem({ item, isActive, collapsed, onClick, badge }: DesktopNa
           <Icon
             className={cn(
               "w-6 h-6 transition-all duration-200",
-              isActive ? "stroke-[2.5px]" : "stroke-[1.5px]"
+              isActive ? "stroke-[2.5px] text-secondary" : "stroke-[1.5px]"
             )}
           />
         {badge && badge > 0 && (
@@ -264,11 +264,11 @@ function MobileNavItem({ item, isActive, onClick, badge }: MobileNavItemProps) {
     >
       <div className={cn(
         "p-1.5 rounded-lg transition-colors relative",
-        isActive && "bg-primary"
+        isActive && "bg-secondary"
       )}>
         <Icon className={cn(
           "w-5 h-5",
-          isActive && "stroke-[2.5px]"
+          isActive && "stroke-[2.5px] text-secondary-foreground"
         )} />
         {badge && badge > 0 && (
           <span className="absolute -top-1 -right-1 min-w-4 h-4 px-1 bg-secondary text-secondary-foreground text-xs rounded-full flex items-center justify-center font-bold">
