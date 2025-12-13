@@ -9,7 +9,7 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
   useEffect(() => {
     const timer = setTimeout(() => {
       onComplete?.();
-    }, 6000);
+    }, 15000);
     return () => clearTimeout(timer);
   }, [onComplete]);
 
