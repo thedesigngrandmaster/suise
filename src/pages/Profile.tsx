@@ -12,7 +12,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { AlbumCard } from "@/components/AlbumCard";
 import { StreakBadge } from "@/components/StreakBadge";
-import { User, Edit, MessageCircle, UserPlus, Check, Copy, Wallet } from "lucide-react";
+import { AvatarUpload } from "@/components/AvatarUpload";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { User, Edit, MessageCircle, UserPlus, Copy, Wallet } from "lucide-react";
 import { toast } from "sonner";
 
 interface ProfileData {
@@ -121,16 +123,18 @@ export default function Profile() {
       <div className="max-w-2xl mx-auto px-4 py-6">
         {/* Profile Header */}
         <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 mb-8">
-          {profileData.avatar_url ? (
-            <img
-              src={profileData.avatar_url}
-              alt={profileData.display_name || ""}
-              className="w-24 h-24 rounded-full object-cover"
+          {isOwnProfile ? (
+            <AvatarUpload 
+              currentAvatarUrl={profileData.avatar_url} 
+              onUploadComplete={(url) => setProfileData({ ...profileData, avatar_url: url })}
             />
           ) : (
-            <div className="w-24 h-24 rounded-full bg-secondary/20 flex items-center justify-center">
-              <User className="w-12 h-12 text-secondary" />
-            </div>
+            <Avatar className="w-24 h-24">
+              <AvatarImage src={profileData.avatar_url || undefined} />
+              <AvatarFallback className="bg-secondary/20">
+                <User className="w-12 h-12 text-secondary" />
+              </AvatarFallback>
+            </Avatar>
           )}
 
           <div className="flex-1 text-center sm:text-left">

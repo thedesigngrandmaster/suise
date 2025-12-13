@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { Home, Archive, Compass, Settings, Plus, Search, Bell, MessageCircle, Users, LogOut } from "lucide-react";
+import { Home, Archive, Compass, Settings, Plus, Search, Bell, MessageCircle, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "./ui/button";
 import { BrandHeader } from "./BrandHeader";
 import { UserMenu, UserAvatar } from "./UserMenu";
+import { UserDetailsPanel } from "./UserDetailsPanel";
 import { SearchModal } from "./SearchModal";
 import { NotificationsPanel } from "./NotificationsPanel";
 import { UploadModal } from "./UploadModal";
@@ -40,7 +41,7 @@ interface DashboardLayoutProps {
 }
 
 export function DashboardLayout({ children, activeTab, onTabChange }: DashboardLayoutProps) {
-  const { user, signOut } = useAuth();
+  const { user, profile, signOut } = useAuth();
   const { unreadCount } = useNotifications(user?.id);
   const navigate = useNavigate();
   
@@ -70,6 +71,13 @@ export function DashboardLayout({ children, activeTab, onTabChange }: DashboardL
             <BrandHeader collapsed={collapsed} />
           </button>
         </div>
+        
+        {/* User Details Panel */}
+        {user && profile && (
+          <div className={cn("px-3", collapsed ? "py-2" : "pb-4")}>
+            <UserDetailsPanel collapsed={collapsed} />
+          </div>
+        )}
 
         <nav className="flex-1 px-3 py-4 overflow-y-auto">
           <ul className="space-y-1">
