@@ -54,8 +54,8 @@ export function HomeFeed() {
     return `Legendary ${streakCount}-day streak! You're unstoppable! 🏆`;
   };
 
-  const handleDemoClick = () => {
-    toast.info("This is demo content. Create your own albums to see them here!");
+  const handleDemoClick = (albumId: string) => {
+    navigate(`/demo-album/${albumId}`);
   };
 
   return (
@@ -148,7 +148,7 @@ export function HomeFeed() {
                 <DemoAlbumCard
                   key={album.id}
                   album={album}
-                  onClick={handleDemoClick}
+                  onClick={() => handleDemoClick(album.id)}
                 />
               ))}
             </div>
