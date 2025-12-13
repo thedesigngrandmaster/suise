@@ -20,7 +20,8 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { ArrowLeft, Heart, Eye, Share2, MoreHorizontal, Trash2, Edit, Users, Send, Wallet, Copy } from "lucide-react";
+import { CollaboratorsManager } from "@/components/CollaboratorsManager";
+import { ArrowLeft, Heart, Eye, Share2, MoreHorizontal, Trash2, Edit, Users, UserPlus, Send, Wallet, Copy } from "lucide-react";
 import { toast } from "sonner";
 
 interface AlbumDetails {
@@ -53,6 +54,7 @@ export default function AlbumDetail() {
   const [loading, setLoading] = useState(true);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [transferDialogOpen, setTransferDialogOpen] = useState(false);
+  const [collaboratorsDialogOpen, setCollaboratorsDialogOpen] = useState(false);
   const [editTitle, setEditTitle] = useState("");
   const [editDescription, setEditDescription] = useState("");
   const [transferUsername, setTransferUsername] = useState("");
@@ -209,6 +211,10 @@ export default function AlbumDetail() {
                     <Edit className="w-4 h-4 mr-2" />
                     Edit Album
                   </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setCollaboratorsDialogOpen(true)}>
+                    <UserPlus className="w-4 h-4 mr-2" />
+                    Manage Collaborators
+                  </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => setTransferDialogOpen(true)}>
                     <Users className="w-4 h-4 mr-2" />
                     Transfer Ownership
@@ -352,6 +358,25 @@ export default function AlbumDetail() {
             />
             <Button variant="suise" onClick={handleTransfer}>Transfer</Button>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Collaborators Dialog */}
+      <Dialog open={collaboratorsDialogOpen} onOpenChange={setCollaboratorsDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Album Collaborators</DialogTitle>
+            <DialogDescription>
+              Collaborators can add and edit memories in this album.
+            </DialogDescription>
+          </DialogHeader>
+          {album && (
+            <CollaboratorsManager
+              albumId={album.id}
+              ownerId={album.owner_id}
+              isOwner={isOwner || false}
+            />
+          )}
         </DialogContent>
       </Dialog>
 
