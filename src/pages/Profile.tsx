@@ -54,15 +54,17 @@ export default function Profile() {
       if (cleanUsername) {
         const data = await getProfileByUsername(cleanUsername);
         setProfileData(data);
-      } else if (user && currentUserProfile) {
-        // Redirect to proper profile URL if we have username
-        if (currentUserProfile.username) {
-          navigate(`/@${currentUserProfile.username}`, { replace: true });
-          return;
+        setLoading(false);
+      } else if (user) {
+        // If no username in URL, show current user's profile
+        if (currentUserProfile) {
+          setProfileData(currentUserProfile as ProfileData);
         }
-        setProfileData(currentUserProfile as ProfileData);
+        setLoading(false);
+      } else {
+        // Not logged in and no username - redirect to auth
+        navigate("/auth");
       }
-      setLoading(false);
     };
     fetchProfile();
   }, [cleanUsername, user, currentUserProfile, navigate]);

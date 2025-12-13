@@ -63,6 +63,66 @@ export const demoAlbums = [
     owner: { display_name: "Casey Martinez", avatar_url: null },
     is_public: true,
   },
+  {
+    id: "demo-7",
+    title: "Pet Adventures",
+    description: "Furry friends and their antics",
+    cover_image_url: "https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=400&h=400&fit=crop",
+    love_count: 678,
+    view_count: 3421,
+    owner: { display_name: "Riley Johnson", avatar_url: null },
+    is_public: true,
+  },
+  {
+    id: "demo-8",
+    title: "Art & Creativity",
+    description: "Paintings, sketches, and crafts",
+    cover_image_url: "https://images.unsplash.com/photo-1460661419201-fd4cecdf8a8b?w=400&h=400&fit=crop",
+    love_count: 234,
+    view_count: 1089,
+    owner: { display_name: "Quinn Davis", avatar_url: null },
+    is_public: true,
+  },
+  {
+    id: "demo-9",
+    title: "Music & Concerts",
+    description: "Live shows and vinyl collections",
+    cover_image_url: "https://images.unsplash.com/photo-1514320291840-2e0a9bf2a9ae?w=400&h=400&fit=crop",
+    love_count: 445,
+    view_count: 2156,
+    owner: { display_name: "Avery Wilson", avatar_url: null },
+    is_public: true,
+  },
+  {
+    id: "demo-10",
+    title: "Fitness Journey",
+    description: "Workouts and healthy living",
+    cover_image_url: "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=400&h=400&fit=crop",
+    love_count: 321,
+    view_count: 1678,
+    owner: { display_name: "Jordan Blake", avatar_url: null },
+    is_public: true,
+  },
+  {
+    id: "demo-11",
+    title: "Night Sky",
+    description: "Astrophotography and stargazing",
+    cover_image_url: "https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?w=400&h=400&fit=crop",
+    love_count: 589,
+    view_count: 2890,
+    owner: { display_name: "Skyler Moon", avatar_url: null },
+    is_public: true,
+  },
+  {
+    id: "demo-12",
+    title: "Vintage Vibes",
+    description: "Retro finds and nostalgia",
+    cover_image_url: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=400&fit=crop",
+    love_count: 267,
+    view_count: 1234,
+    owner: { display_name: "Finley Rose", avatar_url: null },
+    is_public: true,
+  },
 ];
 
 // Demo memories for each album
@@ -112,6 +172,48 @@ export const demoMemories: Record<string, Array<{ image_url: string; caption: st
     { image_url: "https://images.unsplash.com/photo-1470252649378-9c29740c9fa8?w=800", caption: "Magic hour" },
     { image_url: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=800", caption: "Dreamy" },
   ],
+  "demo-7": [
+    { image_url: "https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=800", caption: "Best friend" },
+    { image_url: "https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=800", caption: "Park day" },
+    { image_url: "https://images.unsplash.com/photo-1583511655857-d19b40a7a54e?w=800", caption: "Nap time" },
+    { image_url: "https://images.unsplash.com/photo-1517849845537-4d257902454a?w=800", caption: "Smile!" },
+    { image_url: "https://images.unsplash.com/photo-1574158622682-e40e69881006?w=800", caption: "Curious cat" },
+  ],
+  "demo-8": [
+    { image_url: "https://images.unsplash.com/photo-1460661419201-fd4cecdf8a8b?w=800", caption: "Colors" },
+    { image_url: "https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=800", caption: "Brushstrokes" },
+    { image_url: "https://images.unsplash.com/photo-1499892477393-f675706cbe6e?w=800", caption: "Studio" },
+    { image_url: "https://images.unsplash.com/photo-1452860606245-08befc0ff44b?w=800", caption: "Abstract" },
+    { image_url: "https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=800", caption: "Gallery" },
+  ],
+  "demo-9": [
+    { image_url: "https://images.unsplash.com/photo-1514320291840-2e0a9bf2a9ae?w=800", caption: "Live show" },
+    { image_url: "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800", caption: "On stage" },
+    { image_url: "https://images.unsplash.com/photo-1511735111819-9a3f7709049c?w=800", caption: "Vinyl" },
+    { image_url: "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=800", caption: "DJ set" },
+    { image_url: "https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=800", caption: "Festival" },
+  ],
+  "demo-10": [
+    { image_url: "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=800", caption: "Gym day" },
+    { image_url: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=800", caption: "Running" },
+    { image_url: "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=800", caption: "Yoga" },
+    { image_url: "https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?w=800", caption: "Strength" },
+    { image_url: "https://images.unsplash.com/photo-1546483875-ad9014c88eba?w=800", caption: "Progress" },
+  ],
+  "demo-11": [
+    { image_url: "https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?w=800", caption: "Milky Way" },
+    { image_url: "https://images.unsplash.com/photo-1465101162946-4377e57745c3?w=800", caption: "Galaxy" },
+    { image_url: "https://images.unsplash.com/photo-1444703686981-a3abbc4d4fe3?w=800", caption: "Stars" },
+    { image_url: "https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=800", caption: "Nebula" },
+    { image_url: "https://images.unsplash.com/photo-1516339901601-2e1b62dc0c45?w=800", caption: "Night sky" },
+  ],
+  "demo-12": [
+    { image_url: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800", caption: "Retro finds" },
+    { image_url: "https://images.unsplash.com/photo-1525385133512-2f3bdd039054?w=800", caption: "Vintage car" },
+    { image_url: "https://images.unsplash.com/photo-1558171813-4c088753af8f?w=800", caption: "Old camera" },
+    { image_url: "https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?w=800", caption: "Polaroid" },
+    { image_url: "https://images.unsplash.com/photo-1527631746610-bca00a040d60?w=800", caption: "Nostalgia" },
+  ],
 };
 
 interface DemoAlbumCardProps {
@@ -150,11 +252,6 @@ export function DemoAlbumCard({ album, onClick }: DemoAlbumCardProps) {
         <h3 className="font-bold text-sm truncate">{album.title}</h3>
         <p className="text-xs text-muted-foreground truncate">by {album.owner.display_name}</p>
       </div>
-
-      {/* Demo badge */}
-      <div className="absolute top-2 right-2 px-2 py-0.5 bg-secondary text-secondary-foreground text-xs font-bold rounded-full">
-        Demo
-      </div>
     </button>
   );
 }
@@ -163,7 +260,7 @@ export function DemoContentBanner() {
   return (
     <div className="bg-gradient-to-r from-secondary/20 to-primary/20 rounded-xl p-4 mb-6 border border-border">
       <p className="text-sm text-muted-foreground text-center">
-        👋 These are sample albums to inspire you. Create your own to see them here!
+        👋 Discover inspiring albums from the community!
       </p>
     </div>
   );

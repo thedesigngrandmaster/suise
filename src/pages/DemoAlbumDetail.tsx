@@ -4,14 +4,41 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, Heart, Eye, Share2, User } from "lucide-react";
 import { demoAlbums, demoMemories } from "@/components/DemoContent";
 import { useState } from "react";
+import { toast } from "sonner";
 
 export default function DemoAlbumDetail() {
   const { albumId } = useParams<{ albumId: string }>();
   const navigate = useNavigate();
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [loved, setLoved] = useState(false);
+  const [loveCount, setLoveCount] = useState(0);
 
   const album = demoAlbums.find((a) => a.id === albumId);
   const memories = demoMemories[albumId || ""] || [];
+
+  // Initialize love count from album data
+  useState(() => {
+    if (album) {
+      setLoveCount(album.love_count);
+    }
+  });
+
+  const handleLove = () => {
+    if (loved) {
+      setLoved(false);
+      setLoveCount((prev) => prev - 1);
+      toast.success("Removed from favorites");
+    } else {
+      setLoved(true);
+      setLoveCount((prev) => prev + 1);
+      toast.success("Added to favorites!");
+    }
+  };
+
+  const handleShare = () => {
+    navigator.clipboard.writeText(window.location.href);
+    toast.success("Link copied to clipboard!");
+  };
 
   if (!album) {
     return (
@@ -51,10 +78,15 @@ export default function DemoAlbumDetail() {
           </div>
 
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon">
-              <Heart className="w-5 h-5" />
+            <Button 
+              variant={loved ? "default" : "ghost"} 
+              size="icon" 
+              onClick={handleLove}
+              className={loved ? "text-red-500" : ""}
+            >
+              <Heart className={`w-5 h-5 ${loved ? "fill-current" : ""}`} />
             </Button>
-            <Button variant="ghost" size="icon">
+            <Button variant="ghost" size="icon" onClick={handleShare}>
               <Share2 className="w-5 h-5" />
             </Button>
           </div>
@@ -66,7 +98,7 @@ export default function DemoAlbumDetail() {
             <Eye className="w-4 h-4" /> {album.view_count} views
           </span>
           <span className="flex items-center gap-1">
-            <Heart className="w-4 h-4" /> {album.love_count} loves
+            <Heart className={`w-4 h-4 ${loved ? "text-red-500 fill-current" : ""}`} /> {loveCount || album.love_count} loves
           </span>
         </div>
 
