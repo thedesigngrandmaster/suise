@@ -417,6 +417,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      is_album_owner_or_coowner: {
+        Args: { album_id: string; user_id: string }
+        Returns: boolean
+      }
       update_user_streak: { Args: { p_user_id: string }; Returns: number }
     }
     Enums: {

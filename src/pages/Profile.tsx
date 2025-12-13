@@ -5,7 +5,6 @@ import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
 import { useAlbums } from "@/hooks/useAlbums";
 import { useConnections } from "@/hooks/useConnections";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -15,7 +14,7 @@ import { StreakBadge } from "@/components/StreakBadge";
 import { AvatarUpload } from "@/components/AvatarUpload";
 import { CoverPhotoUpload } from "@/components/CoverPhotoUpload";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { User, Edit, MessageCircle, UserPlus, Copy, Wallet, Clock } from "lucide-react";
+import { User, Edit, MessageCircle, UserPlus, Copy, Wallet, Clock, Lock, Home } from "lucide-react";
 import { toast } from "sonner";
 
 interface ProfileData {
@@ -33,6 +32,8 @@ interface ProfileData {
   show_wallet: boolean;
 }
 
+type ProfileState = "loading" | "found" | "not-found" | "private";
+
 export default function Profile() {
   const { username } = useParams<{ username: string }>();
   const { user, profile: currentUserProfile, refreshProfile } = useAuth();
@@ -41,7 +42,7 @@ export default function Profile() {
   const navigate = useNavigate();
 
   const [profileData, setProfileData] = useState<ProfileData | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [profileState, setProfileState] = useState<ProfileState>("loading");
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState({
     display_name: "",
@@ -54,23 +55,29 @@ export default function Profile() {
 
   useEffect(() => {
     const fetchProfile = async () => {
-      setLoading(true);
+      setProfileState("loading");
       
       if (cleanUsername) {
-        // Fetch profile by username from URL - works for anyone
         const data = await getProfileByUsername(cleanUsername);
+        if (!data) {
+          setProfileState("not-found");
+          return;
+        }
+        
+        // Check if profile is private and user is not the owner
+        if (!data.is_public && (!user || user.id !== data.id)) {
+          setProfileData(data);
+          setProfileState("private");
+          return;
+        }
+        
         setProfileData(data);
-        setLoading(false);
+        setProfileState("found");
       } else if (user && currentUserProfile) {
-        // No username in URL, show current user's profile
         setProfileData(currentUserProfile as ProfileData);
-        setLoading(false);
+        setProfileState("found");
       } else if (!user && !cleanUsername) {
-        // Not logged in and no username - redirect to auth
-        setLoading(false);
         navigate("/auth");
-      } else {
-        setLoading(false);
       }
     };
     
@@ -98,31 +105,70 @@ export default function Profile() {
     }
   };
 
-  if (loading) {
+  // Loading state
+  if (profileState === "loading") {
     return (
       <DashboardLayout activeTab="home" onTabChange={(tab) => navigate(`/${tab === "home" ? "" : tab}`)}>
         <div className="max-w-2xl mx-auto px-4 py-6">
           <div className="animate-pulse">
-            <div className="w-24 h-24 bg-muted rounded-full mb-4" />
-            <div className="h-8 bg-muted rounded w-48 mb-2" />
-            <div className="h-4 bg-muted rounded w-32" />
+            <div className="w-full h-32 sm:h-48 bg-muted rounded-2xl mb-4" />
+            <div className="flex items-center gap-4 -mt-12 px-4">
+              <div className="w-24 h-24 bg-muted rounded-full border-4 border-background" />
+              <div className="flex-1 pt-12">
+                <div className="h-8 bg-muted rounded w-48 mb-2" />
+                <div className="h-4 bg-muted rounded w-32" />
+              </div>
+            </div>
           </div>
         </div>
       </DashboardLayout>
     );
   }
 
-  if (!profileData) {
+  // Not found state
+  if (profileState === "not-found") {
     return (
       <DashboardLayout activeTab="home" onTabChange={(tab) => navigate(`/${tab === "home" ? "" : tab}`)}>
         <div className="max-w-2xl mx-auto px-4 py-16 text-center">
           <User className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
-          <h2 className="text-xl font-bold mb-2">User not found</h2>
-          <p className="text-muted-foreground">The profile you're looking for doesn't exist.</p>
+          <h2 className="text-2xl font-bold font-bricolage mb-2">User not found</h2>
+          <p className="text-muted-foreground mb-6">
+            The profile you're looking for doesn't exist or has been removed.
+          </p>
+          <Button variant="secondary" onClick={() => navigate("/")}>
+            <Home className="w-4 h-4 mr-2" />
+            Go Home
+          </Button>
         </div>
       </DashboardLayout>
     );
   }
+
+  // Private profile state
+  if (profileState === "private" && profileData) {
+    return (
+      <DashboardLayout activeTab="home" onTabChange={(tab) => navigate(`/${tab === "home" ? "" : tab}`)}>
+        <div className="max-w-2xl mx-auto px-4 py-16 text-center">
+          <div className="w-20 h-20 mx-auto mb-4 bg-muted rounded-full flex items-center justify-center">
+            <Lock className="w-10 h-10 text-muted-foreground" />
+          </div>
+          <h2 className="text-2xl font-bold font-bricolage mb-2">This profile is private</h2>
+          <p className="text-muted-foreground mb-2">
+            @{profileData.username}
+          </p>
+          <p className="text-muted-foreground mb-6">
+            This user has chosen to keep their profile private.
+          </p>
+          <Button variant="secondary" onClick={() => navigate("/")}>
+            <Home className="w-4 h-4 mr-2" />
+            Go Home
+          </Button>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  if (!profileData) return null;
 
   return (
     <DashboardLayout activeTab="home" onTabChange={(tab) => navigate(`/${tab === "home" ? "" : tab}`)}>
