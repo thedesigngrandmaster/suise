@@ -146,6 +146,10 @@ export default function Profile() {
 
   // Private profile state
   if (profileState === "private" && profileData) {
+    const canConnect = user && !isConnected(profileData.id) && !hasSentRequest(profileData.id);
+    const alreadyConnected = user && isConnected(profileData.id);
+    const requestPending = user && hasSentRequest(profileData.id);
+
     return (
       <DashboardLayout activeTab="home" onTabChange={(tab) => navigate(`/${tab === "home" ? "" : tab}`)}>
         <div className="max-w-2xl mx-auto px-4 py-16 text-center">
@@ -159,10 +163,32 @@ export default function Profile() {
           <p className="text-muted-foreground mb-6">
             This user has chosen to keep their profile private.
           </p>
-          <Button variant="secondary" onClick={() => navigate("/")}>
-            <Home className="w-4 h-4 mr-2" />
-            Go Home
-          </Button>
+          <div className="flex gap-3 justify-center">
+            {user && (
+              <>
+                {alreadyConnected ? (
+                  <Button variant="outline" disabled>
+                    <UserPlus className="w-4 h-4 mr-2" />
+                    Connected
+                  </Button>
+                ) : requestPending ? (
+                  <Button variant="outline" disabled>
+                    <Clock className="w-4 h-4 mr-2" />
+                    Request Sent
+                  </Button>
+                ) : (
+                  <Button variant="suise" onClick={handleConnect}>
+                    <UserPlus className="w-4 h-4 mr-2" />
+                    Send Connection Request
+                  </Button>
+                )}
+              </>
+            )}
+            <Button variant="secondary" onClick={() => navigate("/")}>
+              <Home className="w-4 h-4 mr-2" />
+              Go Home
+            </Button>
+          </div>
         </div>
       </DashboardLayout>
     );

@@ -417,6 +417,23 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_profile_by_username: {
+        Args: { p_username: string }
+        Returns: {
+          avatar_url: string
+          bio: string
+          cover_photo_url: string
+          display_name: string
+          email: string
+          id: string
+          is_public: boolean
+          show_email: boolean
+          show_wallet: boolean
+          streak_count: number
+          username: string
+          wallet_address: string
+        }[]
+      }
       is_album_owner_or_coowner: {
         Args: { album_id: string; user_id: string }
         Returns: boolean

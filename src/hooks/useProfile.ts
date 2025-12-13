@@ -32,16 +32,14 @@ export function useProfile() {
 
   const getProfileByUsername = async (username: string) => {
     const { data, error } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("username", username)
-      .maybeSingle();
+      .rpc("get_profile_by_username", { p_username: username });
 
     if (error) {
       console.error("Error fetching profile:", error);
       return null;
     }
-    return data;
+    // RPC returns an array, get first item
+    return data && data.length > 0 ? data[0] : null;
   };
 
   const checkUsernameAvailable = async (username: string) => {
