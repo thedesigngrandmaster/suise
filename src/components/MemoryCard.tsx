@@ -28,11 +28,11 @@ export function MemoryCard({
   return (
     <div
       className={cn(
-        "group relative overflow-hidden rounded-2xl border-2 border-foreground bg-card shadow-neubrutalist transition-transform hover:scale-[1.02]",
+        "group relative overflow-hidden rounded-2xl bg-card transition-transform hover:scale-[1.02]",
         className
       )}
     >
-      <div className="aspect-square overflow-hidden">
+      <div className="aspect-square overflow-hidden rounded-2xl">
         <img
           src={imageUrl}
           alt={caption || "Memory"}
@@ -41,7 +41,7 @@ export function MemoryCard({
       </div>
       
       {caption && (
-        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-foreground/80 to-transparent p-3 pt-8">
+        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-foreground/80 to-transparent p-3 pt-8 rounded-b-2xl">
           <p className="text-card text-sm font-medium line-clamp-2">{caption}</p>
         </div>
       )}
@@ -50,22 +50,22 @@ export function MemoryCard({
         <button
           onClick={handleLike}
           className={cn(
-            "p-2 rounded-full border-2 border-foreground transition-all",
+            "p-2 rounded-full transition-all",
             liked ? "bg-destructive" : "bg-card hover:bg-primary"
           )}
         >
           <Heart className={cn("w-4 h-4", liked && "fill-current")} />
         </button>
-        <button className="p-2 rounded-full border-2 border-foreground bg-card hover:bg-secondary transition-colors">
+        <button className="p-2 rounded-full bg-card hover:bg-secondary transition-colors">
           <MessageCircle className="w-4 h-4" />
         </button>
-        <button className="p-2 rounded-full border-2 border-foreground bg-card hover:bg-accent transition-colors">
+        <button className="p-2 rounded-full bg-card hover:bg-accent transition-colors">
           <Share2 className="w-4 h-4" />
         </button>
       </div>
 
       {likeCount > 0 && (
-        <div className="absolute bottom-2 right-2 flex items-center gap-1 bg-card/90 backdrop-blur-sm px-2 py-1 rounded-full border border-foreground text-xs font-bold">
+        <div className="absolute bottom-2 right-2 flex items-center gap-1 bg-card/90 backdrop-blur-sm px-2 py-1 rounded-full text-xs font-bold">
           <Heart className="w-3 h-3 fill-destructive text-destructive" />
           {likeCount}
         </div>

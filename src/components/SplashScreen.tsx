@@ -1,5 +1,4 @@
-import { YoomaAvatar } from "./YoomaAvatar";
-import { cn } from "@/lib/utils";
+import suiseLogo from "@/assets/images/01. Suise's Logo (Mascot and Wordmark).png";
 
 interface SplashScreenProps {
   onComplete?: () => void;
@@ -12,16 +11,15 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
       onClick={onComplete}
     >
       <div className="flex flex-col items-center gap-6 fade-in-up">
-        <YoomaAvatar variant="wave" size="xl" animate />
+        <img 
+          src={suiseLogo} 
+          alt="Suise Logo" 
+          className="h-32 w-auto object-contain"
+        />
         
-        <div className="text-center">
-          <h1 className="text-5xl font-black text-foreground tracking-tight">
-            Suise
-          </h1>
-          <p className="text-foreground/80 font-semibold mt-2">
-            Your memory vault
-          </p>
-        </div>
+        <p className="text-foreground/80 font-semibold text-lg font-bricolage">
+          Your memory vault
+        </p>
       </div>
       
       <p className="absolute bottom-12 text-foreground/60 text-sm font-medium animate-pulse">

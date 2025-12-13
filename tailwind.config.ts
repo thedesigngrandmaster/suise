@@ -14,7 +14,8 @@ export default {
     },
     extend: {
       fontFamily: {
-        nunito: ["Nunito", "sans-serif"],
+        poppins: ["Poppins", "sans-serif"],
+        bricolage: ["Bricolage Grotesque", "sans-serif"],
       },
       colors: {
         border: "hsl(var(--border))",
