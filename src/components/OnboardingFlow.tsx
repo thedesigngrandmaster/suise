@@ -13,6 +13,7 @@ import brandShapeMirror from "@/assets/images/05. brand-shape-mirror.svg";
 
 interface OnboardingStep {
   title: string;
+  highlight: string;
   image: string;
   imagePosition: "left" | "right";
   maskShape: string;
@@ -20,25 +21,29 @@ interface OnboardingStep {
 
 const steps: OnboardingStep[] = [
   {
-    title: "Store your moments in your own private vault.",
+    title: "Store your moments in ",
+    highlight: "your own private vault.",
     image: firstScreen,
     imagePosition: "left",
     maskShape: brandShapeLeft,
   },
   {
-    title: "Share only when you want. You're in control.",
+    title: "Share only when you want. ",
+    highlight: "You're in control.",
     image: secondScreen,
     imagePosition: "right",
     maskShape: brandShapeMirror,
   },
   {
-    title: "Add a memory every day to grow your streak!",
+    title: "Add a memory every day to ",
+    highlight: "grow your streak!",
     image: thirdScreen,
     imagePosition: "left",
     maskShape: brandShapeLeft,
   },
   {
-    title: "Ready to start",
+    title: "",
+    highlight: "Ready to start",
     image: lastScreen,
     imagePosition: "left",
     maskShape: brandShapeLeft,
@@ -135,10 +140,11 @@ function StepContent({ step }: StepContentProps) {
       {/* Image side */}
       <div className={`${isImageLeft ? "lg:order-1" : "lg:order-2"} flex justify-center`}>
         <div 
-          className="relative w-full max-w-md aspect-square brand-shape-mask"
+          className="relative w-full max-w-md aspect-square brand-shape-mask drop-shadow-lg"
           style={{
             WebkitMaskImage: `url(${step.maskShape})`,
             maskImage: `url(${step.maskShape})`,
+            filter: "drop-shadow(0 10px 25px rgba(0, 0, 0, 0.15))",
           }}
         >
           <img
@@ -151,8 +157,9 @@ function StepContent({ step }: StepContentProps) {
 
       {/* Text side */}
       <div className={`${isImageLeft ? "lg:order-2" : "lg:order-1"} text-center lg:text-left`}>
-        <h2 className="text-3xl lg:text-4xl font-bold font-bricolage text-secondary leading-tight">
+        <h2 className="text-3xl lg:text-4xl font-bold font-bricolage text-foreground leading-tight">
           {step.title}
+          <span className="text-secondary">{step.highlight}</span>
         </h2>
       </div>
     </div>
@@ -166,31 +173,30 @@ interface LastStepContentProps {
 
 function LastStepContent({ step, onLogin }: LastStepContentProps) {
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center fade-in-up">
-      {/* Left side - image with title below */}
-      <div className="flex flex-col items-center lg:items-start gap-6">
-        <div 
-          className="relative w-full max-w-md aspect-square brand-shape-mask"
-          style={{
-            WebkitMaskImage: `url(${step.maskShape})`,
-            maskImage: `url(${step.maskShape})`,
-          }}
-        >
-          <img
-            src={step.image}
-            alt="Onboarding illustration"
-            className="w-full h-full object-cover"
-          />
-        </div>
-        <h2 className="text-3xl lg:text-4xl font-bold font-bricolage text-secondary text-center lg:text-left">
-          {step.title}
-        </h2>
+    <div className="flex flex-col items-center gap-8 fade-in-up">
+      {/* Centered illustration */}
+      <div 
+        className="relative w-full max-w-md aspect-square brand-shape-mask"
+        style={{
+          WebkitMaskImage: `url(${step.maskShape})`,
+          maskImage: `url(${step.maskShape})`,
+          filter: "drop-shadow(0 10px 25px rgba(0, 0, 0, 0.15))",
+        }}
+      >
+        <img
+          src={step.image}
+          alt="Onboarding illustration"
+          className="w-full h-full object-cover"
+        />
       </div>
 
-      {/* Right side - ZKLogin modal */}
-      <div className="flex justify-center lg:justify-end">
-        <ZKLoginModal onLogin={onLogin} />
-      </div>
+      {/* Centered title */}
+      <h2 className="text-3xl lg:text-4xl font-bold font-bricolage text-secondary text-center">
+        {step.highlight}
+      </h2>
+
+      {/* ZKLogin modal */}
+      <ZKLoginModal onLogin={onLogin} />
     </div>
   );
 }
