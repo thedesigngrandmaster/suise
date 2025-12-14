@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { useAuth } from "@/hooks/useAuth";
@@ -7,6 +7,9 @@ import { useAlbums } from "@/hooks/useAlbums";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,7 +24,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { CollaboratorsManager } from "@/components/CollaboratorsManager";
-import { ArrowLeft, Heart, Eye, Share2, MoreHorizontal, Trash2, Edit, Users, UserPlus, Send, Wallet, Copy } from "lucide-react";
+import { ArrowLeft, Heart, Eye, Share2, MoreHorizontal, Trash2, Edit, Users, UserPlus, Send, Wallet, Copy, Plus, Upload, X, ImagePlus } from "lucide-react";
 import { toast } from "sonner";
 
 interface AlbumDetails {
@@ -43,24 +46,47 @@ interface AlbumDetails {
   };
 }
 
+interface Memory {
+  id: string;
+  image_url: string;
+  caption: string | null;
+  is_public: boolean;
+  owner_id: string;
+}
+
 export default function AlbumDetail() {
   const { albumId } = useParams<{ albumId: string }>();
-  const { user } = useAuth();
-  const { memories, fetchAlbumMemories, loading: memoriesLoading } = useMemories(albumId);
+  const { user, profile } = useAuth();
+  const { memories, fetchAlbumMemories, uploadMemory, deleteMemory, loading: memoriesLoading } = useMemories(albumId);
   const { deleteAlbum, updateAlbum, transferOwnership, loveAlbum } = useAlbums(user?.id);
   const navigate = useNavigate();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [album, setAlbum] = useState<AlbumDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [transferDialogOpen, setTransferDialogOpen] = useState(false);
   const [collaboratorsDialogOpen, setCollaboratorsDialogOpen] = useState(false);
+  const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
+  const [editMemoryDialogOpen, setEditMemoryDialogOpen] = useState(false);
   const [editTitle, setEditTitle] = useState("");
   const [editDescription, setEditDescription] = useState("");
   const [transferUsername, setTransferUsername] = useState("");
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [selectedMemory, setSelectedMemory] = useState<Memory | null>(null);
+  
+  // Upload state
+  const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [uploadPreview, setUploadPreview] = useState<string | null>(null);
+  const [uploadCaption, setUploadCaption] = useState("");
+  const [uploadIsPublic, setUploadIsPublic] = useState(true);
+  const [uploading, setUploading] = useState(false);
+
+  // Edit memory state
+  const [editMemoryCaption, setEditMemoryCaption] = useState("");
 
   const isOwner = user && album && user.id === album.owner_id;
+  const isCoOwner = user && album && user.id !== album.owner_id; // Simplified check
 
   useEffect(() => {
     const fetchAlbum = async () => {
@@ -144,6 +170,85 @@ export default function AlbumDetail() {
     }
   };
 
+  // Photo upload handlers
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please select an image file");
+      return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("Image must be less than 10MB");
+      return;
+    }
+
+    setUploadFile(file);
+    const reader = new FileReader();
+    reader.onload = (e) => setUploadPreview(e.target?.result as string);
+    reader.readAsDataURL(file);
+    setUploadDialogOpen(true);
+  };
+
+  const handleUploadMemory = async () => {
+    if (!uploadFile || !albumId) return;
+    setUploading(true);
+
+    try {
+      await uploadMemory(albumId, uploadFile, uploadCaption, uploadIsPublic);
+      setUploadDialogOpen(false);
+      resetUploadState();
+      toast.success("Memory added!");
+    } catch (error: any) {
+      toast.error("Failed to upload", { description: error.message });
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const resetUploadState = () => {
+    setUploadFile(null);
+    setUploadPreview(null);
+    setUploadCaption("");
+    setUploadIsPublic(true);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const handleDeleteMemory = async (memoryId: string) => {
+    if (confirm("Delete this memory?")) {
+      await deleteMemory(memoryId);
+      setSelectedImage(null);
+      toast.success("Memory deleted");
+    }
+  };
+
+  const handleEditMemory = async () => {
+    if (!selectedMemory) return;
+    
+    const { error } = await supabase
+      .from("memories")
+      .update({ caption: editMemoryCaption })
+      .eq("id", selectedMemory.id);
+
+    if (error) {
+      toast.error("Failed to update memory");
+      return;
+    }
+
+    fetchAlbumMemories(albumId);
+    setEditMemoryDialogOpen(false);
+    toast.success("Memory updated");
+  };
+
+  const openEditMemory = (memory: Memory) => {
+    setSelectedMemory(memory);
+    setEditMemoryCaption(memory.caption || "");
+    setEditMemoryDialogOpen(true);
+    setSelectedImage(null);
+  };
+
   if (loading) {
     return (
       <DashboardLayout activeTab="explore" onTabChange={(tab) => navigate(`/${tab === "home" ? "" : tab}`)}>
@@ -173,6 +278,8 @@ export default function AlbumDetail() {
       </DashboardLayout>
     );
   }
+
+  const canManagePhotos = isOwner || user;
 
   return (
     <DashboardLayout activeTab="explore" onTabChange={(tab) => navigate(`/${tab === "home" ? "" : tab}`)}>
@@ -242,6 +349,27 @@ export default function AlbumDetail() {
           </span>
         </div>
 
+        {/* Add Photo Button */}
+        {canManagePhotos && (
+          <div className="mb-6">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleFileSelect}
+              className="hidden"
+            />
+            <Button 
+              variant="outline" 
+              onClick={() => fileInputRef.current?.click()}
+              className="gap-2"
+            >
+              <ImagePlus className="w-4 h-4" />
+              Add Photo
+            </Button>
+          </div>
+        )}
+
         {/* Memories Grid */}
         {memoriesLoading ? (
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
@@ -251,22 +379,63 @@ export default function AlbumDetail() {
           </div>
         ) : memories.length === 0 ? (
           <div className="text-center py-16">
-            <p className="text-muted-foreground">No memories in this album yet</p>
+            <ImagePlus className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+            <p className="text-muted-foreground mb-4">No memories in this album yet</p>
+            {canManagePhotos && (
+              <Button variant="suise" onClick={() => fileInputRef.current?.click()}>
+                <Plus className="w-4 h-4 mr-2" />
+                Add your first memory
+              </Button>
+            )}
           </div>
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             {memories.map((memory) => (
-              <button
-                key={memory.id}
-                onClick={() => setSelectedImage(memory.image_url)}
-                className="aspect-square rounded-2xl overflow-hidden hover:opacity-90 transition-opacity"
-              >
-                <img
-                  src={memory.image_url}
-                  alt={memory.caption || "Memory"}
-                  className="w-full h-full object-cover"
-                />
-              </button>
+              <div key={memory.id} className="relative group">
+                <button
+                  onClick={() => setSelectedImage(memory.image_url)}
+                  className="aspect-square rounded-2xl overflow-hidden hover:opacity-90 transition-opacity w-full"
+                >
+                  <img
+                    src={memory.image_url}
+                    alt={memory.caption || "Memory"}
+                    className="w-full h-full object-cover"
+                  />
+                </button>
+                
+                {/* Memory actions overlay */}
+                {(isOwner || memory.owner_id === user?.id) && (
+                  <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="secondary" size="icon" className="h-8 w-8 shadow-md">
+                          <MoreHorizontal className="w-4 h-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => openEditMemory(memory as Memory)}>
+                          <Edit className="w-4 h-4 mr-2" />
+                          Edit Caption
+                        </DropdownMenuItem>
+                        <DropdownMenuItem 
+                          className="text-destructive"
+                          onClick={() => handleDeleteMemory(memory.id)}
+                        >
+                          <Trash2 className="w-4 h-4 mr-2" />
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                )}
+                
+                {/* Caption overlay */}
+                {memory.caption && (
+                  <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/60 to-transparent rounded-b-2xl">
+                    <p className="text-white text-sm truncate">{memory.caption}</p>
+                  </div>
+                )}
+              </div>
             ))}
           </div>
         )}
@@ -313,7 +482,63 @@ export default function AlbumDetail() {
         </div>
       </div>
 
-      {/* Edit Dialog */}
+      {/* Upload Memory Dialog */}
+      <Dialog open={uploadDialogOpen} onOpenChange={(open) => {
+        setUploadDialogOpen(open);
+        if (!open) resetUploadState();
+      }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add Memory</DialogTitle>
+            <DialogDescription>Add a new photo to this album.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            {uploadPreview && (
+              <div className="relative aspect-video rounded-lg overflow-hidden bg-muted">
+                <img
+                  src={uploadPreview}
+                  alt="Preview"
+                  className="w-full h-full object-contain"
+                />
+                <button
+                  onClick={resetUploadState}
+                  className="absolute top-2 right-2 p-1 bg-background/80 rounded-full"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            )}
+            <div>
+              <Label htmlFor="caption">Caption (optional)</Label>
+              <Textarea
+                id="caption"
+                value={uploadCaption}
+                onChange={(e) => setUploadCaption(e.target.value)}
+                placeholder="Add a caption..."
+                className="mt-1"
+              />
+            </div>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="public">Make this memory public</Label>
+              <Switch
+                id="public"
+                checked={uploadIsPublic}
+                onCheckedChange={setUploadIsPublic}
+              />
+            </div>
+            <Button 
+              variant="suise" 
+              className="w-full" 
+              onClick={handleUploadMemory}
+              disabled={!uploadFile || uploading}
+            >
+              {uploading ? "Uploading..." : "Add Memory"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Album Dialog */}
       <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
         <DialogContent>
           <DialogHeader>
@@ -321,22 +546,46 @@ export default function AlbumDetail() {
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <label className="text-sm font-medium">Title</label>
+              <Label htmlFor="title">Title</Label>
               <Input
+                id="title"
                 value={editTitle}
                 onChange={(e) => setEditTitle(e.target.value)}
                 className="mt-1"
               />
             </div>
             <div>
-              <label className="text-sm font-medium">Description</label>
+              <Label htmlFor="description">Description</Label>
               <Input
+                id="description"
                 value={editDescription}
                 onChange={(e) => setEditDescription(e.target.value)}
                 className="mt-1"
               />
             </div>
             <Button variant="suise" onClick={handleUpdate}>Save Changes</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Memory Dialog */}
+      <Dialog open={editMemoryDialogOpen} onOpenChange={setEditMemoryDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Memory</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="memoryCaption">Caption</Label>
+              <Textarea
+                id="memoryCaption"
+                value={editMemoryCaption}
+                onChange={(e) => setEditMemoryCaption(e.target.value)}
+                placeholder="Add a caption..."
+                className="mt-1"
+              />
+            </div>
+            <Button variant="suise" onClick={handleEditMemory}>Save Changes</Button>
           </div>
         </DialogContent>
       </Dialog>
@@ -386,6 +635,12 @@ export default function AlbumDetail() {
           className="fixed inset-0 bg-background/95 z-50 flex items-center justify-center p-4"
           onClick={() => setSelectedImage(null)}
         >
+          <button 
+            className="absolute top-4 right-4 p-2 hover:bg-muted rounded-full"
+            onClick={() => setSelectedImage(null)}
+          >
+            <X className="w-6 h-6" />
+          </button>
           <img
             src={selectedImage}
             alt=""

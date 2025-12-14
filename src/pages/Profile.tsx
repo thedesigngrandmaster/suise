@@ -74,17 +74,18 @@ export default function Profile() {
         setProfileData(data);
         setProfileState("found");
       } else if (user && currentUserProfile) {
+        // Use current user profile - this syncs with useAuth
         setProfileData(currentUserProfile as ProfileData);
         setProfileState("found");
       } else if (!user && !cleanUsername) {
-        navigate("/auth");
+        navigate("/");
       }
     };
     
     fetchProfile();
   }, [cleanUsername, user, currentUserProfile]);
 
-  const { albums } = useAlbums(profileData?.id);
+  const { albums, fetchUserAlbums } = useAlbums(profileData?.id);
 
   const handleSaveProfile = async () => {
     if (!user) return;
