@@ -12,6 +12,7 @@ interface Album {
   is_public: boolean;
   view_count: number;
   love_count?: number;
+  follower_count?: number;
   owner_id: string;
 }
 
@@ -31,6 +32,9 @@ export function AlbumCard({ album, onClick, showFollowButton = true }: AlbumCard
 
   const isOwnAlbum = user?.id === album.owner_id;
   const coverImage = album.cover_image_url || album.first_memory_url;
+  
+  // Use follower count from album data or from hook
+  const displayFollowerCount = album.follower_count ?? followerCount;
 
   const handleFollowClick = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -81,12 +85,10 @@ export function AlbumCard({ album, onClick, showFollowButton = true }: AlbumCard
                 <span>{album.love_count}</span>
               </div>
             )}
-            {showFollowButton && (
-              <div className="flex items-center gap-1">
-                <Users className="w-4 h-4" />
-                <span>{followerCount}</span>
-              </div>
-            )}
+            <div className="flex items-center gap-1">
+              <Users className="w-4 h-4" />
+              <span>{displayFollowerCount}</span>
+            </div>
           </div>
 
           {/* Follow Button */}
