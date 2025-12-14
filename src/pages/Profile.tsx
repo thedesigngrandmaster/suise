@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
-import { useAlbums } from "@/hooks/useAlbums";
+import { useAlbumsContext } from "@/contexts/AlbumsContext";
 import { useConnections } from "@/hooks/useConnections";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -38,6 +38,7 @@ export default function Profile() {
   const { username } = useParams<{ username: string }>();
   const { user, profile: currentUserProfile, refreshProfile } = useAuth();
   const { updateProfile, getProfileByUsername } = useProfile();
+  const { albums } = useAlbumsContext();
   const { sendRequest, hasSentRequest, isConnected } = useConnections(user?.id);
   const navigate = useNavigate();
 
@@ -51,7 +52,7 @@ export default function Profile() {
   });
 
   const isOwnProfile = user && profileData && user.id === profileData.id;
-  const cleanUsername = username;
+  const cleanUsername = username?.replace("@", "");
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -64,7 +65,6 @@ export default function Profile() {
           return;
         }
         
-        // Check if profile is private and user is not the owner
         if (!data.is_public && (!user || user.id !== data.id)) {
           setProfileData(data);
           setProfileState("private");
@@ -74,7 +74,6 @@ export default function Profile() {
         setProfileData(data);
         setProfileState("found");
       } else if (user && currentUserProfile) {
-        // Use current user profile - this syncs with useAuth
         setProfileData(currentUserProfile as ProfileData);
         setProfileState("found");
       } else if (!user && !cleanUsername) {
@@ -84,8 +83,6 @@ export default function Profile() {
     
     fetchProfile();
   }, [cleanUsername, user, currentUserProfile]);
-
-  const { albums, fetchUserAlbums } = useAlbums(profileData?.id);
 
   const handleSaveProfile = async () => {
     if (!user) return;
@@ -159,7 +156,7 @@ export default function Profile() {
           </div>
           <h2 className="text-2xl font-bold font-bricolage mb-2">This profile is private</h2>
           <p className="text-muted-foreground mb-2">
-            {profileData.username}
+            @{profileData.username}
           </p>
           <p className="text-muted-foreground mb-6">
             This user has chosen to keep their profile private.
@@ -207,18 +204,15 @@ export default function Profile() {
             onUploadComplete={(url) => setProfileData({ ...profileData, cover_photo_url: url })}
           />
         ) : profileData.cover_photo_url ? (
-          <div className="w-full h-32 sm:h-48 rounded-2xl overflow-hidden mb-4 relative">
+          <div className="w-full h-32 sm:h-48 rounded-2xl overflow-hidden mb-4">
             <img 
               src={profileData.cover_photo_url} 
               alt="Cover" 
               className="w-full h-full object-cover"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent" />
           </div>
         ) : (
-          <div className="w-full h-32 sm:h-48 bg-gradient-to-br from-secondary/30 to-primary/30 rounded-2xl mb-4 relative">
-            <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent rounded-2xl" />
-          </div>
+          <div className="w-full h-32 sm:h-48 bg-gradient-to-br from-secondary/30 to-primary/30 rounded-2xl mb-4" />
         )}
 
         {/* Profile Header */}
@@ -272,12 +266,12 @@ export default function Profile() {
             ) : (
               <>
                 <div className="flex items-center gap-3 justify-center sm:justify-start">
-                  <h1 className="text-2xl font-bold font-bricolage drop-shadow-md text-primary">
+                  <h1 className="text-2xl font-bold font-bricolage">
                     {profileData.display_name || profileData.username}
                   </h1>
                   <StreakBadge count={profileData.streak_count} />
                 </div>
-                <p className="text-muted-foreground drop-shadow-sm">{profileData.username}</p>
+                <p className="text-muted-foreground">@{profileData.username}</p>
                 {profileData.bio && <p className="mt-2">{profileData.bio}</p>}
                 
                 {profileData.show_email && profileData.email && (
