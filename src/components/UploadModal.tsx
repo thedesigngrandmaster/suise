@@ -8,7 +8,6 @@ import { Switch } from "./ui/switch";
 import { useAlbums } from "@/hooks/useAlbums";
 import { useMemories } from "@/hooks/useMemories";
 import { useAuth } from "@/hooks/useAuth";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 interface UploadModalProps {
@@ -21,7 +20,7 @@ type Mode = "select" | "upload" | "create-album";
 
 export function UploadModal({ isOpen, onClose, defaultAlbumId }: UploadModalProps) {
   const { user } = useAuth();
-  const { albums, createAlbum, fetchUserAlbums } = useAlbums(user?.id);
+  const { albums, createAlbum } = useAlbums(user?.id);
   const { uploadMemory } = useMemories();
 
   const [mode, setMode] = useState<Mode>("select");
@@ -65,31 +64,28 @@ export function UploadModal({ isOpen, onClose, defaultAlbumId }: UploadModalProp
 
     setLoading(true);
     
-    // Direct insert to ensure user.id is used
-    const { data: album, error } = await supabase
-      .from("albums")
-      .insert({
-        owner_id: user.id,
-        title: albumTitle,
-        description: albumDescription || null,
-        is_public: albumIsPublic,
-      })
-      .select()
-      .single();
+    // Use the createAlbum function from useAlbums hook
+    // This ensures proper state management and triggers real-time updates
+    const result = await createAlbum({
+      title: albumTitle,
+      description: albumDescription || undefined,
+      is_public: albumIsPublic,
+    });
 
-    if (error) {
-      toast.error("Failed to create album", { description: error.message });
+    if (result?.error) {
       setLoading(false);
       return;
     }
 
-    toast.success("Album created!");
-    setSelectedAlbumId(album.id);
+    // Set the newly created album as selected
+    if (result?.album) {
+      setSelectedAlbumId(result.album.id);
+    }
+    
     setMode("select");
     setAlbumTitle("");
     setAlbumDescription("");
     setAlbumIsPublic(false);
-    await fetchUserAlbums();
     setLoading(false);
   };
 
@@ -99,6 +95,7 @@ export function UploadModal({ isOpen, onClose, defaultAlbumId }: UploadModalProp
     setPreview(null);
     setCaption("");
     setIsPublic(false);
+    setSelectedAlbumId(defaultAlbumId || "");
     onClose();
   };
 
