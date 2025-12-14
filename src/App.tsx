@@ -10,7 +10,6 @@ import Explore from "./pages/Explore";
 import Profile from "./pages/Profile";
 import Settings from "./pages/Settings";
 import Chat from "./pages/Chat";
-import Connect from "./pages/Connect";
 import AlbumDetail from "./pages/AlbumDetail";
 import DemoAlbumDetail from "./pages/DemoAlbumDetail";
 import NotFound from "./pages/NotFound";
@@ -30,8 +29,8 @@ const App = () => (
             <Route path="/vault" element={<Vault />} />
             <Route path="/explore" element={<Explore />} />
             <Route path="/settings" element={<Settings />} />
-            <Route path="/connect" element={<Connect />} />
             <Route path="/chat" element={<Chat />} />
+            <Route path="/chat/:partnerId" element={<Chat />} />
             <Route path="/chat/:partnerId" element={<Chat />} />
             <Route path="/album/:albumId" element={<AlbumDetail />} />
             <Route path="/demo-album/:albumId" element={<DemoAlbumDetail />} />

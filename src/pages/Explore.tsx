@@ -1,13 +1,14 @@
 import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { useAlbums, Album } from "@/hooks/useAlbums";
+import { useAlbumFollows } from "@/hooks/useAlbumFollows";
+import { useAuth } from "@/hooks/useAuth";
 import { AlbumCard } from "@/components/AlbumCard";
 import { useNavigate } from "react-router-dom";
-import { TrendingUp, Sparkles, Users, Search, User } from "lucide-react";
+import { TrendingUp, Sparkles, Heart, Search, User } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-
 interface SearchResult {
   type: "user" | "album";
   id: string;
@@ -18,13 +19,14 @@ interface SearchResult {
 }
 
 export default function Explore() {
+  const { user } = useAuth();
   const { fetchPublicAlbums, albums, loading } = useAlbums();
+  const { followedAlbums, loading: followsLoading } = useAlbumFollows(user?.id);
   const navigate = useNavigate();
   const [activeCategory, setActiveCategory] = useState("trending");
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
-
   useEffect(() => {
     fetchPublicAlbums(100);
   }, []);
@@ -120,15 +122,24 @@ export default function Explore() {
     navigate(url);
   };
 
-  // Sort albums by different criteria based on category
-  const sortedAlbums = [...albums].sort((a, b) => {
-    if (activeCategory === "trending") {
-      return (b.love_count || 0) - (a.love_count || 0);
-    } else if (activeCategory === "new") {
-      return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
+  // Get albums based on category
+  const getDisplayAlbums = () => {
+    if (activeCategory === "following") {
+      return followedAlbums;
     }
-    return 0;
-  });
+    
+    return [...albums].sort((a, b) => {
+      if (activeCategory === "trending") {
+        return (b.love_count || 0) - (a.love_count || 0);
+      } else if (activeCategory === "new") {
+        return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
+      }
+      return 0;
+    });
+  };
+  
+  const displayAlbums = getDisplayAlbums();
+  const isLoading = activeCategory === "following" ? followsLoading : loading;
 
   return (
     <DashboardLayout activeTab="explore" onTabChange={(tab) => navigate(`/${tab === "home" ? "" : tab}`)}>
@@ -211,25 +222,25 @@ export default function Explore() {
             onClick={() => setActiveCategory("new")}
           />
           <CategoryPill 
-            icon={<Users className="w-4 h-4" />} 
+            icon={<Heart className="w-4 h-4" />} 
             label="Following" 
             active={activeCategory === "following"}
             onClick={() => setActiveCategory("following")}
           />
         </div>
 
-        {loading ? (
+        {isLoading ? (
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             {[...Array(9)].map((_, i) => (
               <div key={i} className="aspect-square bg-muted rounded-2xl animate-pulse" />
             ))}
           </div>
-        ) : sortedAlbums.length > 0 ? (
+        ) : displayAlbums.length > 0 ? (
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            {sortedAlbums.map((album) => (
+            {displayAlbums.map((album) => (
               <AlbumCard
                 key={album.id}
-                album={album}
+                album={album as Album}
                 onClick={() => navigate(`/album/${album.id}`)}
                 showOwner
               />
@@ -237,9 +248,19 @@ export default function Explore() {
           </div>
         ) : (
           <div className="text-center py-16">
-            <Sparkles className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
-            <h3 className="text-lg font-bold mb-2">No public albums yet</h3>
-            <p className="text-muted-foreground">Be the first to share your memories with the community!</p>
+            {activeCategory === "following" ? (
+              <>
+                <Heart className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
+                <h3 className="text-lg font-bold mb-2">No followed albums yet</h3>
+                <p className="text-muted-foreground">Browse albums and click the follow button to see them here!</p>
+              </>
+            ) : (
+              <>
+                <Sparkles className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
+                <h3 className="text-lg font-bold mb-2">No public albums yet</h3>
+                <p className="text-muted-foreground">Be the first to share your memories with the community!</p>
+              </>
+            )}
           </div>
         )}
       </div>

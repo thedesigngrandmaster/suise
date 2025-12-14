@@ -83,6 +83,19 @@ export function useMemories(albumId?: string) {
       return { error };
     }
 
+    // Set as album cover if this is the first memory
+    const { count } = await supabase
+      .from("memories")
+      .select("*", { count: "exact", head: true })
+      .eq("album_id", albumId);
+    
+    if (count === 1) {
+      await supabase
+        .from("albums")
+        .update({ cover_image_url: publicUrl })
+        .eq("id", albumId);
+    }
+
     // Update streak
     await supabase.rpc("update_user_streak", { p_user_id: user.id });
 

@@ -57,6 +57,31 @@ export function useAlbums(userId?: string) {
     setLoading(false);
   };
 
+  // Real-time subscription for album changes
+  useEffect(() => {
+    if (!userId) return;
+
+    const channel = supabase
+      .channel(`user-albums-${userId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "albums",
+          filter: `owner_id=eq.${userId}`,
+        },
+        () => {
+          fetchUserAlbums();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [userId]);
+
   const fetchPublicAlbums = async (limit = 50) => {
     setLoading(true);
     
