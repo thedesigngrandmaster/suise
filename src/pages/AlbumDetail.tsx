@@ -4,6 +4,7 @@ import { DashboardLayout } from "@/components/DashboardLayout";
 import { useAuth } from "@/hooks/useAuth";
 import { useMemories } from "@/hooks/useMemories";
 import { useAlbums } from "@/hooks/useAlbums";
+import { useAlbumFollows } from "@/hooks/useAlbumFollows";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,7 +25,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { CollaboratorsManager } from "@/components/CollaboratorsManager";
-import { ArrowLeft, Heart, Eye, Share2, MoreHorizontal, Trash2, Edit, Users, UserPlus, Send, Wallet, Copy, Plus, Upload, X, ImagePlus } from "lucide-react";
+import { ArrowLeft, Heart, Eye, Share2, MoreHorizontal, Trash2, Edit, Users, UserPlus, Send, Wallet, Copy, Plus, Upload, X, ImagePlus, Bookmark, BookmarkCheck } from "lucide-react";
 import { toast } from "sonner";
 
 interface AlbumDetails {
@@ -59,6 +60,7 @@ export default function AlbumDetail() {
   const { user, profile } = useAuth();
   const { memories, fetchAlbumMemories, uploadMemory, deleteMemory, loading: memoriesLoading } = useMemories(albumId);
   const { deleteAlbum, updateAlbum, transferOwnership, loveAlbum } = useAlbums(user?.id);
+  const { isFollowing, followAlbum, unfollowAlbum } = useAlbumFollows(user?.id);
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -161,6 +163,15 @@ export default function AlbumDetail() {
     if (!albumId) return;
     await loveAlbum(albumId);
     setAlbum((prev) => prev ? { ...prev, love_count: (prev.love_count || 0) + 1 } : null);
+  };
+
+  const handleFollow = async () => {
+    if (!albumId) return;
+    if (isFollowing(albumId)) {
+      await unfollowAlbum(albumId);
+    } else {
+      await followAlbum(albumId);
+    }
   };
 
   const copyWalletAddress = () => {
@@ -299,6 +310,20 @@ export default function AlbumDetail() {
           </div>
 
           <div className="flex items-center gap-2">
+            {!isOwner && albumId && (
+              <Button 
+                variant={isFollowing(albumId) ? "secondary" : "ghost"} 
+                size="icon" 
+                onClick={handleFollow}
+                title={isFollowing(albumId) ? "Unfollow" : "Follow"}
+              >
+                {isFollowing(albumId) ? (
+                  <BookmarkCheck className="w-5 h-5" />
+                ) : (
+                  <Bookmark className="w-5 h-5" />
+                )}
+              </Button>
+            )}
             <Button variant="ghost" size="icon" onClick={handleLove}>
               <Heart className="w-5 h-5" />
             </Button>

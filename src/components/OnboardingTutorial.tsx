@@ -27,13 +27,19 @@ const steps = [
   {
     id: 3,
     title: "Create an Album",
-    description: "Group your memories into albums. Perfect for trips, events, or daily moments.",
+    description: "Group your memories into albums. Perfect for trips, events, or daily moments. The first photo becomes your cover!",
     icon: FolderPlus,
   },
   {
     id: 4,
+    title: "Follow Albums",
+    description: "Follow albums you love to get notified when new memories are added. Find them in Explore > Following!",
+    icon: Sparkles,
+  },
+  {
+    id: 5,
     title: "You're All Set!",
-    description: "Start capturing memories and watch your streak grow. Have fun!",
+    description: "Start capturing memories and watch your streak grow. You'll receive notifications for all updates!",
     icon: Check,
   },
 ];

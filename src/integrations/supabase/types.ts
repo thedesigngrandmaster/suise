@@ -50,6 +50,42 @@ export type Database = {
           },
         ]
       }
+      album_follows: {
+        Row: {
+          album_id: string
+          created_at: string | null
+          id: string
+          user_id: string
+        }
+        Insert: {
+          album_id: string
+          created_at?: string | null
+          id?: string
+          user_id: string
+        }
+        Update: {
+          album_id?: string
+          created_at?: string | null
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "album_follows_album_id_fkey"
+            columns: ["album_id"]
+            isOneToOne: false
+            referencedRelation: "albums"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "album_follows_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       album_loves: {
         Row: {
           album_id: string
@@ -91,6 +127,7 @@ export type Database = {
           cover_image_url: string | null
           created_at: string | null
           description: string | null
+          follow_count: number | null
           id: string
           is_public: boolean | null
           love_count: number | null
@@ -104,6 +141,7 @@ export type Database = {
           cover_image_url?: string | null
           created_at?: string | null
           description?: string | null
+          follow_count?: number | null
           id?: string
           is_public?: boolean | null
           love_count?: number | null
@@ -117,6 +155,7 @@ export type Database = {
           cover_image_url?: string | null
           created_at?: string | null
           description?: string | null
+          follow_count?: number | null
           id?: string
           is_public?: boolean | null
           love_count?: number | null
