@@ -16,6 +16,8 @@ import { CoverPhotoUpload } from "@/components/CoverPhotoUpload";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { User, Edit, MessageCircle, UserPlus, Copy, Wallet, Clock, Lock, Home } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import type { Album } from "@/contexts/AlbumsContext";
 
 interface ProfileData {
   id: string;
@@ -38,12 +40,14 @@ export default function Profile() {
   const { username } = useParams<{ username: string }>();
   const { user, profile: currentUserProfile, refreshProfile } = useAuth();
   const { updateProfile, getProfileByUsername } = useProfile();
-  const { albums } = useAlbumsContext();
+  const { albums: userOwnAlbums } = useAlbumsContext();
   const { sendRequest, hasSentRequest, isConnected } = useConnections(user?.id);
   const navigate = useNavigate();
 
   const [profileData, setProfileData] = useState<ProfileData | null>(null);
   const [profileState, setProfileState] = useState<ProfileState>("loading");
+  const [profileAlbums, setProfileAlbums] = useState<Album[]>([]);
+  const [loadingAlbums, setLoadingAlbums] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState({
     display_name: "",
@@ -73,16 +77,57 @@ export default function Profile() {
         
         setProfileData(data);
         setProfileState("found");
+        
+        // Fetch albums for this profile
+        await fetchProfileAlbums(data.id);
       } else if (user && currentUserProfile) {
         setProfileData(currentUserProfile as ProfileData);
         setProfileState("found");
+        
+        // Use own albums from context
+        setProfileAlbums(userOwnAlbums);
       } else if (!user && !cleanUsername) {
         navigate("/");
       }
     };
     
     fetchProfile();
-  }, [cleanUsername, user, currentUserProfile]);
+  }, [cleanUsername, user, currentUserProfile, userOwnAlbums]);
+
+  const fetchProfileAlbums = async (userId: string) => {
+    setLoadingAlbums(true);
+    
+    const { data, error } = await supabase
+      .from("albums")
+      .select(`
+        *,
+        owner:profiles!albums_owner_id_fkey(id, username, display_name, avatar_url, wallet_address),
+        co_owners:album_co_owners(user_id, user:profiles(username, display_name, avatar_url)),
+        memories(image_url, display_order),
+        album_follows(id)
+      `)
+      .eq("owner_id", userId)
+      .eq("is_public", true)
+      .order("created_at", { ascending: false });
+
+    if (!error && data) {
+      const albumsWithFirstMemory = data.map(album => {
+        const sortedMemories = album.memories?.sort((a: any, b: any) => 
+          (a.display_order || 0) - (b.display_order || 0)
+        );
+        return {
+          ...album,
+          first_memory_url: sortedMemories?.[0]?.image_url || album.cover_image_url || null,
+          follower_count: album.album_follows?.length || album.follower_count || 0,
+          memories: undefined,
+          album_follows: undefined,
+        };
+      });
+      setProfileAlbums(albumsWithFirstMemory as Album[]);
+    }
+    
+    setLoadingAlbums(false);
+  };
 
   const handleSaveProfile = async () => {
     if (!user) return;
@@ -266,7 +311,7 @@ export default function Profile() {
             ) : (
               <>
                 <div className="flex items-center gap-3 justify-center sm:justify-start">
-                  <h1 className="text-2xl font-bold font-bricolage">
+                  <h1 className="text-2xl font-bold font-bricolage text-secondary">
                     {profileData.display_name || profileData.username}
                   </h1>
                   <StreakBadge count={profileData.streak_count} />
@@ -343,7 +388,7 @@ export default function Profile() {
         {/* Stats */}
         <div className="flex justify-center gap-8 py-4 border-y border-border mb-6">
           <div className="text-center">
-            <p className="text-2xl font-bold">{albums.filter(a => a.is_public || isOwnProfile).length}</p>
+            <p className="text-2xl font-bold">{isOwnProfile ? userOwnAlbums.length : profileAlbums.length}</p>
             <p className="text-sm text-muted-foreground">Albums</p>
           </div>
           <div className="text-center">
@@ -357,11 +402,17 @@ export default function Profile() {
           <h2 className="text-lg font-bold mb-4">
             {isOwnProfile ? "Your Albums" : "Public Albums"}
           </h2>
-          {albums.length === 0 ? (
+          {loadingAlbums ? (
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="aspect-square bg-muted rounded-2xl animate-pulse" />
+              ))}
+            </div>
+          ) : (isOwnProfile ? userOwnAlbums : profileAlbums).length === 0 ? (
             <p className="text-center text-muted-foreground py-8">No albums yet</p>
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-              {albums
+              {(isOwnProfile ? userOwnAlbums : profileAlbums)
                 .filter((a) => a.is_public || isOwnProfile)
                 .map((album) => (
                   <AlbumCard
