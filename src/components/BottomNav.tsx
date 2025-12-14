@@ -1,4 +1,4 @@
-import { Home, Images, Users, User, Plus } from "lucide-react";
+import { Home, Images, Users, User, Plus, MessageCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "./ui/button";
 
@@ -19,25 +19,29 @@ export function BottomNav({ activeTab = "home", onTabChange, onUpload }: BottomN
   const navItems: (NavItem & { id: string })[] = [
     { id: "home", icon: <Home className="w-5 h-5" />, label: "Home" },
     { id: "albums", icon: <Images className="w-5 h-5" />, label: "Albums" },
-    { id: "social", icon: <Users className="w-5 h-5" />, label: "Friends" },
+    { id: "connect", icon: <Users className="w-5 h-5" />, label: "Connect" },
+    { id: "chat", icon: <MessageCircle className="w-5 h-5" />, label: "Chat" },
     { id: "profile", icon: <User className="w-5 h-5" />, label: "Profile" },
   ];
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-md border-t border-border z-50 pb-safe">
-      <div className="flex items-center justify-between h-16 px-6 max-w-lg mx-auto relative">
-        {navItems.slice(0, 2).map((item) => (
-          <NavButton
-            key={item.id}
-            icon={item.icon}
-            label={item.label}
-            active={activeTab === item.id}
-            onClick={() => onTabChange?.(item.id)}
-          />
-        ))}
+      <div className="flex items-center h-16 px-4 max-w-lg mx-auto">
+        {/* Nav Items - Evenly Spaced */}
+        <div className="flex items-center justify-between flex-1">
+          {navItems.map((item) => (
+            <NavButton
+              key={item.id}
+              icon={item.icon}
+              label={item.label}
+              active={activeTab === item.id}
+              onClick={() => onTabChange?.(item.id)}
+            />
+          ))}
+        </div>
         
-        {/* FAB Upload Button */}
-        <div className="absolute left-1/2 -translate-x-1/2 -top-5">
+        {/* FAB Upload Button - Far Right */}
+        <div className="ml-4">
           <Button
             size="icon"
             variant="suise"
@@ -47,16 +51,6 @@ export function BottomNav({ activeTab = "home", onTabChange, onUpload }: BottomN
             <Plus className="w-6 h-6" />
           </Button>
         </div>
-        
-        {navItems.slice(2).map((item) => (
-          <NavButton
-            key={item.id}
-            icon={item.icon}
-            label={item.label}
-            active={activeTab === item.id}
-            onClick={() => onTabChange?.(item.id)}
-          />
-        ))}
       </div>
     </nav>
   );
@@ -67,7 +61,7 @@ function NavButton({ icon, label, active, onClick }: NavItem) {
     <button
       onClick={onClick}
       className={cn(
-        "flex flex-col items-center gap-1 min-w-[60px] transition-all duration-200",
+        "flex flex-col items-center gap-1 min-w-[48px] transition-all duration-200",
         "active:scale-95"
       )}
       aria-label={label}
@@ -94,4 +88,4 @@ function NavButton({ icon, label, active, onClick }: NavItem) {
       </span>
     </button>
   );
-}
+  }
