@@ -32,6 +32,7 @@ export function useMessages(userId?: string) {
   const [threads, setThreads] = useState<ChatThread[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
+  const [totalUnreadCount, setTotalUnreadCount] = useState(0);
 
   const fetchThreads = async () => {
     if (!userId) return;
@@ -49,26 +50,31 @@ export function useMessages(userId?: string) {
     if (!error && data) {
       // Group by chat partner
       const threadMap = new Map<string, ChatThread>();
+      let unreadTotal = 0;
       
       data.forEach((msg: any) => {
         const partnerId = msg.sender_id === userId ? msg.receiver_id : msg.sender_id;
         const partner = msg.sender_id === userId ? msg.receiver : msg.sender;
         
         if (!threadMap.has(partnerId)) {
+          const isUnread = msg.receiver_id === userId && !msg.read;
+          if (isUnread) unreadTotal++;
           threadMap.set(partnerId, {
             partnerId,
             partner,
             lastMessage: msg.content,
             lastMessageTime: msg.created_at,
-            unreadCount: msg.receiver_id === userId && !msg.read ? 1 : 0,
+            unreadCount: isUnread ? 1 : 0,
           });
         } else if (msg.receiver_id === userId && !msg.read) {
           const thread = threadMap.get(partnerId)!;
           thread.unreadCount++;
+          unreadTotal++;
         }
       });
       
       setThreads(Array.from(threadMap.values()));
+      setTotalUnreadCount(unreadTotal);
     }
     setLoading(false);
   };
@@ -97,6 +103,9 @@ export function useMessages(userId?: string) {
         .eq("sender_id", partnerId)
         .eq("receiver_id", userId)
         .eq("read", false);
+      
+      // Refresh threads to update unread count
+      fetchThreads();
     }
   };
 
@@ -124,6 +133,7 @@ export function useMessages(userId?: string) {
     threads,
     messages,
     loading,
+    totalUnreadCount,
     fetchConversation,
     sendMessage,
     refetch: fetchThreads,

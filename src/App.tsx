@@ -13,6 +13,7 @@ import Chat from "./pages/Chat";
 import AlbumDetail from "./pages/AlbumDetail";
 import DemoAlbumDetail from "./pages/DemoAlbumDetail";
 import NotFound from "./pages/NotFound";
+import Connect from "./pages/Connect";
 
 const queryClient = new QueryClient();
 
@@ -28,6 +29,7 @@ const App = () => (
             <Route path="/home" element={<Index />} />
             <Route path="/vault" element={<Vault />} />
             <Route path="/explore" element={<Explore />} />
+            <Route path="/connect" element={<Connect />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/chat" element={<Chat />} />
             <Route path="/chat/:partnerId" element={<Chat />} />

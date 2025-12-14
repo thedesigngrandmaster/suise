@@ -22,7 +22,7 @@ export function UserDetailsPanel({ collapsed = false }: UserDetailsPanelProps) {
   if (collapsed) {
     return (
       <button
-        onClick={() => navigate(`/@${profile.username}`)}
+        onClick={() => navigate(`/${profile.username}`)}
         className="flex items-center justify-center p-2 hover:bg-muted rounded-full transition-colors"
       >
         <Avatar className="w-10 h-10">
@@ -38,7 +38,7 @@ export function UserDetailsPanel({ collapsed = false }: UserDetailsPanelProps) {
   return (
     <div className="p-4 bg-muted/50 rounded-2xl">
       <button
-        onClick={() => navigate(`/@${profile.username}`)}
+        onClick={() => navigate(`/${profile.username}`)}
         className="flex items-center gap-3 w-full text-left hover:opacity-80 transition-opacity"
       >
         <Avatar className="w-12 h-12">
@@ -52,7 +52,7 @@ export function UserDetailsPanel({ collapsed = false }: UserDetailsPanelProps) {
             {profile.display_name || profile.username}
           </p>
           <p className="text-sm text-muted-foreground truncate">
-            @{profile.username}
+            {profile.username}
           </p>
         </div>
       </button>

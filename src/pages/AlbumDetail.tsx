@@ -466,7 +466,7 @@ export default function AlbumDetail() {
         {/* Owner Info */}
         <div className="mt-8 p-4 bg-card rounded-2xl">
           <div className="flex items-center gap-4">
-            <button onClick={() => navigate(`/@${album.owner.username}`)}>
+            <button onClick={() => navigate(`/${album.owner.username}`)}>
               {album.owner.avatar_url ? (
                 <img
                   src={album.owner.avatar_url}
@@ -481,7 +481,7 @@ export default function AlbumDetail() {
             </button>
             <div className="flex-1">
               <p className="font-medium">{album.owner.display_name || album.owner.username}</p>
-              <p className="text-sm text-muted-foreground">@{album.owner.username}</p>
+              <p className="text-sm text-muted-foreground">{album.owner.username}</p>
               {album.owner.wallet_address && (
                 <button
                   onClick={copyWalletAddress}

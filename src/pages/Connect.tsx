@@ -114,7 +114,7 @@ export default function Connect() {
                         key={profile.id}
                         className="flex items-center gap-3 p-4 bg-card rounded-2xl"
                       >
-                        <button onClick={() => navigate(`/@${profile.username}`)}>
+                        <button onClick={() => navigate(`/${profile.username}`)}>
                           <Avatar className="w-12 h-12">
                             <AvatarImage src={profile.avatar_url || undefined} />
                             <AvatarFallback>
@@ -124,7 +124,7 @@ export default function Connect() {
                         </button>
                         <div className="flex-1 min-w-0">
                           <button 
-                            onClick={() => navigate(`/@${profile.username}`)}
+                            onClick={() => navigate(`/${profile.username}`)}
                             className="text-left"
                           >
                             <p className="font-medium truncate">{profile.display_name || profile.username}</p>
@@ -255,7 +255,7 @@ export default function Connect() {
                   return (
                     <button
                       key={connection.id}
-                      onClick={() => navigate(`/@${friend?.username}`)}
+                      onClick={() => navigate(`/${friend?.username}`)}
                       className="w-full flex items-center gap-3 p-4 bg-card rounded-2xl hover:bg-muted transition-colors text-left"
                     >
                       {friend?.avatar_url ? (
