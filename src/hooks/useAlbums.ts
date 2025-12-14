@@ -72,7 +72,8 @@ export function useAlbums(userId?: string) {
   useEffect(() => {
     if (!userId) return;
 
-    const channel = supabase
+    // Subscribe to albums table changes
+    const albumsChannel = supabase
       .channel(`user-albums-${userId}`)
       .on(
         "postgres_changes",
@@ -83,13 +84,33 @@ export function useAlbums(userId?: string) {
           filter: `owner_id=eq.${userId}`,
         },
         () => {
+          console.log("Albums table changed, refetching...");
+          fetchUserAlbums();
+        }
+      )
+      .subscribe();
+
+    // Also subscribe to album_co_owners table for co-owned albums
+    const coOwnersChannel = supabase
+      .channel(`user-co-owned-albums-${userId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "album_co_owners",
+          filter: `user_id=eq.${userId}`,
+        },
+        () => {
+          console.log("Co-owners table changed, refetching...");
           fetchUserAlbums();
         }
       )
       .subscribe();
 
     return () => {
-      supabase.removeChannel(channel);
+      supabase.removeChannel(albumsChannel);
+      supabase.removeChannel(coOwnersChannel);
     };
   }, [userId]);
 
@@ -151,7 +172,10 @@ export function useAlbums(userId?: string) {
     }
     
     toast.success("Album created!");
+    
+    // Immediately refetch to update the UI
     await fetchUserAlbums();
+    
     return { album, error: null };
   };
 
