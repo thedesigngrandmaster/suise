@@ -13,6 +13,7 @@ export interface Album {
   view_count: number;
   love_count: number;
   share_count: number;
+  follower_count?: number;
   created_at: string;
   first_memory_url?: string | null;
   owner?: {
@@ -76,7 +77,8 @@ export function AlbumsProvider({ children }: { children: ReactNode }) {
         *,
         owner:profiles!albums_owner_id_fkey(id, username, display_name, avatar_url, wallet_address),
         co_owners:album_co_owners(user_id, user:profiles(username, display_name, avatar_url)),
-        memories(image_url, display_order)
+        memories(image_url, display_order),
+        album_follows(id)
       `)
       .or(`owner_id.eq.${user.id},album_co_owners.user_id.eq.${user.id}`)
       .order("created_at", { ascending: false });
@@ -91,8 +93,10 @@ export function AlbumsProvider({ children }: { children: ReactNode }) {
         );
         return {
           ...album,
-          first_memory_url: sortedMemories?.[0]?.image_url || null,
+          first_memory_url: sortedMemories?.[0]?.image_url || album.cover_image_url || null,
+          follower_count: album.album_follows?.length || album.follower_count || 0,
           memories: undefined,
+          album_follows: undefined,
         };
       });
       setAlbums(albumsWithFirstMemory);
@@ -109,7 +113,8 @@ export function AlbumsProvider({ children }: { children: ReactNode }) {
         *,
         owner:profiles!albums_owner_id_fkey(id, username, display_name, avatar_url, wallet_address),
         co_owners:album_co_owners(user_id, user:profiles(username, display_name, avatar_url)),
-        memories(image_url, display_order)
+        memories(image_url, display_order),
+        album_follows(id)
       `)
       .eq("is_public", true)
       .order("love_count", { ascending: false })
@@ -124,8 +129,10 @@ export function AlbumsProvider({ children }: { children: ReactNode }) {
         );
         return {
           ...album,
-          first_memory_url: sortedMemories?.[0]?.image_url || null,
+          first_memory_url: sortedMemories?.[0]?.image_url || album.cover_image_url || null,
+          follower_count: album.album_follows?.length || album.follower_count || 0,
           memories: undefined,
+          album_follows: undefined,
         };
       });
       setAlbums(albumsWithFirstMemory);
