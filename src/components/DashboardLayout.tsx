@@ -177,7 +177,7 @@ export function DashboardLayout({ children, activeTab, onTabChange }: DashboardL
 
         {/* Mobile bottom nav */}
         <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-background border-t border-border z-50 h-16 pb-safe">
-          <div className="flex items-center justify-around h-full w-full relative">
+          <div className="flex items-center justify-between h-full w-full px-2 relative">
             {mobileNavItems.slice(0, 2).map((item) => (
               <MobileNavItem
                 key={item.id}
@@ -189,18 +189,18 @@ export function DashboardLayout({ children, activeTab, onTabChange }: DashboardL
             ))}
 
             {/* FAB */}
-            <div className="absolute left-1/2 -translate-x-1/2 -top-6">
+            <div className="absolute left-1/2 -translate-x-1/2 -top-5">
               <Button
-                size="fab"
+                size="icon"
                 variant="suise"
                 onClick={() => setUploadOpen(true)}
-                className="shadow-neubrutalist"
+                className="shadow-neubrutalist h-12 w-12 rounded-full"
               >
-                <Plus className="w-7 h-7" />
+                <Plus className="w-5 h-5" />
               </Button>
             </div>
 
-            <div className="w-14" />
+            <div className="w-10" />
 
             {mobileNavItems.slice(2, 5).map((item) => (
               <MobileNavItem
@@ -298,28 +298,28 @@ function MobileNavItem({ item, isActive, onClick, badge }: MobileNavItemProps) {
     <button
       onClick={onClick}
       className={cn(
-        "flex flex-col items-center gap-0.5 p-2 rounded-xl transition-colors",
+        "flex flex-col items-center gap-0.5 p-1 rounded-lg transition-colors min-w-0",
         isActive
           ? "text-secondary"
           : "text-muted-foreground hover:text-foreground"
       )}
     >
       <div className={cn(
-        "p-1.5 rounded-lg transition-colors relative",
+        "p-1 rounded-md transition-colors relative",
         isActive && "bg-secondary"
       )}>
         <Icon className={cn(
-          "w-5 h-5",
+          "w-4 h-4",
           isActive && "stroke-[2.5px] text-secondary-foreground"
         )} />
         {badge && badge > 0 && (
-          <span className="absolute -bottom-1 -right-1 min-w-5 h-5 px-1 bg-secondary text-secondary-foreground text-xs rounded-full flex items-center justify-center font-bold">
+          <span className="absolute -bottom-1 -right-1 min-w-4 h-4 px-0.5 bg-secondary text-secondary-foreground text-[10px] rounded-full flex items-center justify-center font-bold">
             {badge > 9 ? "9+" : badge}
           </span>
         )}
       </div>
       <span className={cn(
-        "text-xs",
+        "text-[10px]",
         isActive ? "font-bold text-secondary" : "font-medium"
       )}>{item.label}</span>
     </button>

@@ -272,7 +272,7 @@ export default function Profile() {
             ) : (
               <>
                 <div className="flex items-center gap-3 justify-center sm:justify-start">
-                  <h1 className="text-2xl font-bold font-bricolage drop-shadow-md">
+                  <h1 className="text-2xl font-bold font-bricolage drop-shadow-md text-primary">
                     {profileData.display_name || profileData.username}
                   </h1>
                   <StreakBadge count={profileData.streak_count} />

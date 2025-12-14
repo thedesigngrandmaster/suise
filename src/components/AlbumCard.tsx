@@ -29,6 +29,12 @@ export function AlbumCard({ album, onClick, onDelete, showOwner }: AlbumCardProp
             alt={album.title}
             className="w-full h-full object-cover transition-transform group-hover:scale-105"
           />
+        ) : album.first_memory_url ? (
+          <img
+            src={album.first_memory_url}
+            alt={album.title}
+            className="w-full h-full object-cover transition-transform group-hover:scale-105"
+          />
         ) : (
           <div className="w-full h-full bg-gradient-to-br from-secondary/30 to-primary/30 flex items-center justify-center">
             <span className="text-4xl">📷</span>
@@ -43,10 +49,10 @@ export function AlbumCard({ album, onClick, onDelete, showOwner }: AlbumCardProp
           <p className="font-bold truncate">{album.title}</p>
           <div className="flex items-center gap-3 text-sm">
             <span className="flex items-center gap-1">
-              <Heart className="w-3 h-3" /> {album.love_count || 0}
+              <Heart className="w-3 h-3" /> {album.love_count || 0} {album.love_count === 1 ? "love" : "loves"}
             </span>
             <span className="flex items-center gap-1">
-              <Eye className="w-3 h-3" /> {album.view_count || 0}
+              <Eye className="w-3 h-3" /> {album.view_count || 0} {album.view_count === 1 ? "view" : "views"}
             </span>
           </div>
         </div>
@@ -67,7 +73,7 @@ export function AlbumCard({ album, onClick, onDelete, showOwner }: AlbumCardProp
             </div>
           )}
           <span className="text-sm text-muted-foreground truncate">
-            @{album.owner.username}
+            {album.owner.username}
           </span>
         </div>
       )}
