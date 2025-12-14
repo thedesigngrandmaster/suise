@@ -24,8 +24,8 @@ export function BottomNav({ activeTab = "home", onTabChange, onUpload }: BottomN
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-card border-t-2 border-foreground px-4 pb-safe z-50">
-      <div className="flex items-center justify-around h-16 max-w-lg mx-auto relative">
+    <nav className="fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-md border-t border-border z-50 pb-safe">
+      <div className="flex items-center justify-between h-16 px-6 max-w-lg mx-auto relative">
         {navItems.slice(0, 2).map((item) => (
           <NavButton
             key={item.id}
@@ -37,19 +37,16 @@ export function BottomNav({ activeTab = "home", onTabChange, onUpload }: BottomN
         ))}
         
         {/* FAB Upload Button */}
-        <div className="absolute left-1/2 -translate-x-1/2 -top-6">
+        <div className="absolute left-1/2 -translate-x-1/2 -top-5">
           <Button
-            size="fab"
+            size="icon"
             variant="suise"
             onClick={onUpload}
-            className="shadow-neubrutalist"
+            className="shadow-neubrutalist h-14 w-14 rounded-full hover:scale-110 transition-transform"
           >
-            <Plus className="w-7 h-7" />
+            <Plus className="w-6 h-6" />
           </Button>
         </div>
-        
-        {/* Spacer for FAB */}
-        <div className="w-16" />
         
         {navItems.slice(2).map((item) => (
           <NavButton
@@ -70,19 +67,31 @@ function NavButton({ icon, label, active, onClick }: NavItem) {
     <button
       onClick={onClick}
       className={cn(
-        "flex flex-col items-center gap-0.5 p-2 rounded-xl transition-colors",
-        active 
-          ? "text-foreground" 
-          : "text-muted-foreground hover:text-foreground"
+        "flex flex-col items-center gap-1 min-w-[60px] transition-all duration-200",
+        "active:scale-95"
       )}
+      aria-label={label}
     >
       <div className={cn(
-        "p-1.5 rounded-lg transition-colors",
-        active && "bg-primary"
+        "relative p-2 rounded-2xl transition-all duration-200",
+        active 
+          ? "bg-secondary text-secondary-foreground scale-110" 
+          : "text-muted-foreground hover:bg-muted"
       )}>
         {icon}
+        {/* Active indicator dot */}
+        {active && (
+          <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-secondary-foreground rounded-full" />
+        )}
       </div>
-      <span className="text-xs font-semibold">{label}</span>
+      <span className={cn(
+        "text-[10px] font-medium transition-all duration-200",
+        active 
+          ? "text-secondary font-bold" 
+          : "text-muted-foreground"
+      )}>
+        {label}
+      </span>
     </button>
   );
 }
