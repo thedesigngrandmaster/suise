@@ -5,10 +5,8 @@ import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Textarea } from "./ui/textarea";
 import { Switch } from "./ui/switch";
-import { useAlbums } from "@/hooks/useAlbums";
+import { useAlbumsContext } from "@/contexts/AlbumsContext";
 import { useMemories } from "@/hooks/useMemories";
-import { useAuth } from "@/hooks/useAuth";
-import { toast } from "sonner";
 
 interface UploadModalProps {
   isOpen: boolean;
@@ -19,8 +17,7 @@ interface UploadModalProps {
 type Mode = "select" | "upload" | "create-album";
 
 export function UploadModal({ isOpen, onClose, defaultAlbumId }: UploadModalProps) {
-  const { user } = useAuth();
-  const { albums, createAlbum } = useAlbums(user?.id);
+  const { albums, createAlbum } = useAlbumsContext();
   const { uploadMemory } = useMemories();
 
   const [mode, setMode] = useState<Mode>("select");
@@ -60,20 +57,19 @@ export function UploadModal({ isOpen, onClose, defaultAlbumId }: UploadModalProp
   };
 
   const handleCreateAlbum = async () => {
-    if (!albumTitle.trim() || !user) return;
+    if (!albumTitle.trim()) return;
 
     setLoading(true);
     
-    // Use the createAlbum function from useAlbums hook
-    // This ensures proper state management and triggers real-time updates
     const result = await createAlbum({
       title: albumTitle,
       description: albumDescription || undefined,
       is_public: albumIsPublic,
     });
 
+    setLoading(false);
+
     if (result?.error) {
-      setLoading(false);
       return;
     }
 
@@ -86,7 +82,6 @@ export function UploadModal({ isOpen, onClose, defaultAlbumId }: UploadModalProp
     setAlbumTitle("");
     setAlbumDescription("");
     setAlbumIsPublic(false);
-    setLoading(false);
   };
 
   const handleClose = () => {
