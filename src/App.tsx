@@ -34,7 +34,7 @@ const App = () => (
             <Route path="/chat/:partnerId" element={<Chat />} />
             <Route path="/album/:albumId" element={<AlbumDetail />} />
             <Route path="/demo-album/:albumId" element={<DemoAlbumDetail />} />
-            <Route path="/@:username" element={<Profile />} />
+            <Route path="/:username" element={<Profile />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/notifications" element={<Index />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
