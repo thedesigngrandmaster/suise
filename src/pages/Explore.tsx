@@ -58,9 +58,9 @@ export default function Explore() {
               type: "user",
               id: user.id,
               title: user.display_name || user.username || "Unknown",
-              subtitle: `@${user.username}`,
+              subtitle: user.username || "",
               image: user.avatar_url || undefined,
-              url: `/@${user.username}`,
+              url: `/${user.username}`,
             });
           });
         }
@@ -87,9 +87,9 @@ export default function Explore() {
               type: "user",
               id: user.id,
               title: user.display_name || user.username || "Unknown",
-              subtitle: `@${user.username}`,
+              subtitle: user.username || "",
               image: user.avatar_url || undefined,
-              url: `/@${user.username}`,
+              url: `/${user.username}`,
             });
           });
         }
@@ -100,7 +100,7 @@ export default function Explore() {
               type: "album",
               id: album.id,
               title: album.title,
-              subtitle: `by @${album.owner?.username || "unknown"}`,
+              subtitle: `by ${album.owner?.username || "unknown"}`,
               image: album.cover_image_url || undefined,
               url: `/album/${album.id}`,
             });

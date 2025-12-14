@@ -108,7 +108,7 @@ export function CollaboratorsManager({ albumId, ownerId, isOwner, onUpdate }: Co
         related_album_id: albumId,
       });
 
-      toast.success(`@${targetUser.username} added as collaborator!`);
+      toast.success(`${targetUser.username} added as collaborator!`);
       setSearchUsername("");
       await fetchCollaborators();
       onUpdate?.();
@@ -127,7 +127,7 @@ export function CollaboratorsManager({ albumId, ownerId, isOwner, onUpdate }: Co
     if (error) {
       toast.error("Failed to remove collaborator", { description: error.message });
     } else {
-      toast.success(`@${username || "User"} removed`);
+      toast.success(`${username || "User"} removed`);
       await fetchCollaborators();
       onUpdate?.();
     }
