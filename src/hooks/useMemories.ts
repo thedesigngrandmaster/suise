@@ -13,6 +13,7 @@ export interface Memory {
   view_count: number;
   love_count: number;
   created_at: string;
+  display_order: number;
 }
 
 export function useMemories(albumId?: string) {
@@ -29,7 +30,7 @@ export function useMemories(albumId?: string) {
       .from("memories")
       .select("*")
       .eq("album_id", targetId)
-      .order("created_at", { ascending: false });
+      .order("display_order", { ascending: true });
 
     if (error) {
       console.error("Error fetching memories:", error);
@@ -37,6 +38,24 @@ export function useMemories(albumId?: string) {
       setMemories(data || []);
     }
     setLoading(false);
+  };
+
+  const updateMemoryOrder = async (orderedMemories: Memory[]) => {
+    // Update local state immediately
+    setMemories(orderedMemories);
+
+    // Batch update in database
+    const updates = orderedMemories.map((memory, index) => ({
+      id: memory.id,
+      display_order: index + 1,
+    }));
+
+    for (const update of updates) {
+      await supabase
+        .from("memories")
+        .update({ display_order: update.display_order })
+        .eq("id", update.id);
+    }
   };
 
   const uploadMemory = async (
@@ -125,6 +144,7 @@ export function useMemories(albumId?: string) {
     loading,
     uploadMemory,
     deleteMemory,
+    updateMemoryOrder,
     fetchAlbumMemories,
   };
 }

@@ -25,8 +25,10 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { CollaboratorsManager } from "@/components/CollaboratorsManager";
-import { ArrowLeft, Heart, Eye, Share2, MoreHorizontal, Trash2, Edit, Users, UserPlus, Send, Wallet, Copy, Plus, Upload, X, ImagePlus, Bookmark, BookmarkCheck } from "lucide-react";
+import { ArrowLeft, Heart, Eye, Share2, MoreHorizontal, Trash2, Edit, Users, UserPlus, Send, Wallet, Copy, Plus, Upload, X, ImagePlus, Bookmark, BookmarkCheck, Crop } from "lucide-react";
 import { toast } from "sonner";
+import { SortableMemoryGrid } from "@/components/SortableMemoryGrid";
+import { ImageCropper } from "@/components/ImageCropper";
 
 interface AlbumDetails {
   id: string;
@@ -53,12 +55,13 @@ interface Memory {
   caption: string | null;
   is_public: boolean;
   owner_id: string;
+  display_order: number;
 }
 
 export default function AlbumDetail() {
   const { albumId } = useParams<{ albumId: string }>();
   const { user, profile } = useAuth();
-  const { memories, fetchAlbumMemories, uploadMemory, deleteMemory, loading: memoriesLoading } = useMemories(albumId);
+  const { memories, fetchAlbumMemories, uploadMemory, deleteMemory, updateMemoryOrder, loading: memoriesLoading } = useMemories(albumId);
   const { deleteAlbum, updateAlbum, transferOwnership, loveAlbum } = useAlbums(user?.id);
   const { isFollowing, followAlbum, unfollowAlbum } = useAlbumFollows(user?.id);
   const navigate = useNavigate();
@@ -83,6 +86,11 @@ export default function AlbumDetail() {
   const [uploadCaption, setUploadCaption] = useState("");
   const [uploadIsPublic, setUploadIsPublic] = useState(true);
   const [uploading, setUploading] = useState(false);
+  
+  // Image cropper state
+  const [cropperOpen, setCropperOpen] = useState(false);
+  const [imageToCrop, setImageToCrop] = useState<string | null>(null);
+  const [fileToCrop, setFileToCrop] = useState<File | null>(null);
 
   // Edit memory state
   const [editMemoryCaption, setEditMemoryCaption] = useState("");
@@ -196,11 +204,37 @@ export default function AlbumDetail() {
       return;
     }
 
-    setUploadFile(file);
+    // Open cropper
+    setFileToCrop(file);
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      setImageToCrop(e.target?.result as string);
+      setCropperOpen(true);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleCropComplete = async (croppedBlob: Blob) => {
+    setCropperOpen(false);
+    setImageToCrop(null);
+    
+    // Create file from blob
+    const croppedFile = new File([croppedBlob], fileToCrop?.name || "image.jpg", { type: "image/jpeg" });
+    setUploadFile(croppedFile);
+    
+    // Create preview
     const reader = new FileReader();
     reader.onload = (e) => setUploadPreview(e.target?.result as string);
-    reader.readAsDataURL(file);
+    reader.readAsDataURL(croppedBlob);
     setUploadDialogOpen(true);
+    setFileToCrop(null);
+  };
+
+  const handleCropCancel = () => {
+    setCropperOpen(false);
+    setImageToCrop(null);
+    setFileToCrop(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const handleUploadMemory = async () => {
@@ -211,7 +245,6 @@ export default function AlbumDetail() {
       await uploadMemory(albumId, uploadFile, uploadCaption, uploadIsPublic);
       setUploadDialogOpen(false);
       resetUploadState();
-      toast.success("Memory added!");
     } catch (error: any) {
       toast.error("Failed to upload", { description: error.message });
     } finally {
@@ -225,6 +258,10 @@ export default function AlbumDetail() {
     setUploadCaption("");
     setUploadIsPublic(true);
     if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const handleReorderMemories = (reorderedMemories: Memory[]) => {
+    updateMemoryOrder(reorderedMemories as any);
   };
 
   const handleDeleteMemory = async (memoryId: string) => {
@@ -414,55 +451,16 @@ export default function AlbumDetail() {
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            {memories.map((memory) => (
-              <div key={memory.id} className="relative group">
-                <button
-                  onClick={() => setSelectedImage(memory.image_url)}
-                  className="aspect-square rounded-2xl overflow-hidden hover:opacity-90 transition-opacity w-full"
-                >
-                  <img
-                    src={memory.image_url}
-                    alt={memory.caption || "Memory"}
-                    className="w-full h-full object-cover"
-                  />
-                </button>
-                
-                {/* Memory actions overlay */}
-                {(isOwner || memory.owner_id === user?.id) && (
-                  <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="secondary" size="icon" className="h-8 w-8 shadow-md">
-                          <MoreHorizontal className="w-4 h-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => openEditMemory(memory as Memory)}>
-                          <Edit className="w-4 h-4 mr-2" />
-                          Edit Caption
-                        </DropdownMenuItem>
-                        <DropdownMenuItem 
-                          className="text-destructive"
-                          onClick={() => handleDeleteMemory(memory.id)}
-                        >
-                          <Trash2 className="w-4 h-4 mr-2" />
-                          Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-                )}
-                
-                {/* Caption overlay */}
-                {memory.caption && (
-                  <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/60 to-transparent rounded-b-2xl">
-                    <p className="text-white text-sm truncate">{memory.caption}</p>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
+          <SortableMemoryGrid
+            memories={memories as Memory[]}
+            onReorder={handleReorderMemories}
+            onImageClick={(url) => setSelectedImage(url)}
+            onEditMemory={openEditMemory}
+            onDeleteMemory={handleDeleteMemory}
+            canEdit={!!isOwner}
+            userId={user?.id}
+            isOwner={!!isOwner}
+          />
         )}
 
         {/* Owner Info */}
@@ -672,6 +670,17 @@ export default function AlbumDetail() {
             className="max-w-full max-h-full object-contain rounded-2xl"
           />
         </div>
+      )}
+
+      {/* Image Cropper */}
+      {imageToCrop && (
+        <ImageCropper
+          imageSrc={imageToCrop}
+          onCropComplete={handleCropComplete}
+          onCancel={handleCropCancel}
+          aspect={4 / 3}
+          isOpen={cropperOpen}
+        />
       )}
     </DashboardLayout>
   );

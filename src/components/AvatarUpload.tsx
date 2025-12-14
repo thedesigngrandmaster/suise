@@ -4,8 +4,9 @@ import { useAuth } from "@/hooks/useAuth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Camera, User, Loader2, Trash2, Upload } from "lucide-react";
+import { Camera, User, Loader2, Trash2, Upload, Crop } from "lucide-react";
 import { toast } from "sonner";
+import { ImageCropper } from "./ImageCropper";
 
 interface AvatarUploadProps {
   currentAvatarUrl?: string | null;
@@ -16,6 +17,8 @@ interface AvatarUploadProps {
 export function AvatarUpload({ currentAvatarUrl, onUploadComplete, size = "lg" }: AvatarUploadProps) {
   const { user, refreshProfile } = useAuth();
   const [uploading, setUploading] = useState(false);
+  const [cropperOpen, setCropperOpen] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const sizeClasses = {
@@ -38,15 +41,26 @@ export function AvatarUpload({ currentAvatarUrl, onUploadComplete, size = "lg" }
       return;
     }
 
+    // Read file and open cropper
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      setSelectedImage(e.target?.result as string);
+      setCropperOpen(true);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleCropComplete = async (croppedBlob: Blob) => {
+    if (!user) return;
+    setCropperOpen(false);
     setUploading(true);
 
     try {
-      const fileExt = file.name.split(".").pop();
-      const fileName = `${user.id}/avatar.${fileExt}`;
+      const fileName = `${user.id}/avatar.jpg`;
 
       const { error: uploadError } = await supabase.storage
         .from("avatars")
-        .upload(fileName, file, { upsert: true, cacheControl: "3600" });
+        .upload(fileName, croppedBlob, { upsert: true, cacheControl: "3600", contentType: "image/jpeg" });
 
       if (uploadError) throw uploadError;
 
@@ -71,8 +85,15 @@ export function AvatarUpload({ currentAvatarUrl, onUploadComplete, size = "lg" }
       toast.error("Failed to upload image", { description: error.message });
     } finally {
       setUploading(false);
+      setSelectedImage(null);
       if (fileInputRef.current) fileInputRef.current.value = "";
     }
+  };
+
+  const handleCropCancel = () => {
+    setCropperOpen(false);
+    setSelectedImage(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const handleRemoveAvatar = async () => {
@@ -80,12 +101,10 @@ export function AvatarUpload({ currentAvatarUrl, onUploadComplete, size = "lg" }
     setUploading(true);
 
     try {
-      // Delete from storage
       const { error: deleteError } = await supabase.storage
         .from("avatars")
         .remove([`${user.id}/avatar.jpg`, `${user.id}/avatar.png`, `${user.id}/avatar.webp`]);
 
-      // Update profile to remove avatar URL
       const { error: updateError } = await supabase
         .from("profiles")
         .update({ avatar_url: null, updated_at: new Date().toISOString() })
@@ -105,51 +124,64 @@ export function AvatarUpload({ currentAvatarUrl, onUploadComplete, size = "lg" }
   };
 
   return (
-    <div className="relative group">
-      <Avatar className={sizeClasses[size]}>
-        <AvatarImage src={currentAvatarUrl || undefined} />
-        <AvatarFallback className="bg-secondary/20">
-          <User className="w-1/2 h-1/2 text-secondary" />
-        </AvatarFallback>
-      </Avatar>
-      
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/*"
-        onChange={handleFileSelect}
-        className="hidden"
-        disabled={uploading}
-      />
-      
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            size="icon"
-            variant="secondary"
-            className="absolute bottom-0 right-0 w-8 h-8 rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
-            disabled={uploading}
-          >
-            {uploading ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Camera className="w-4 h-4" />
-            )}
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick={() => fileInputRef.current?.click()}>
-            <Upload className="w-4 h-4 mr-2" />
-            Upload new photo
-          </DropdownMenuItem>
-          {currentAvatarUrl && (
-            <DropdownMenuItem onClick={handleRemoveAvatar} className="text-destructive">
-              <Trash2 className="w-4 h-4 mr-2" />
-              Remove photo
+    <>
+      <div className="relative group">
+        <Avatar className={sizeClasses[size]}>
+          <AvatarImage src={currentAvatarUrl || undefined} />
+          <AvatarFallback className="bg-secondary/20">
+            <User className="w-1/2 h-1/2 text-secondary" />
+          </AvatarFallback>
+        </Avatar>
+        
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          onChange={handleFileSelect}
+          className="hidden"
+          disabled={uploading}
+        />
+        
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              size="icon"
+              variant="secondary"
+              className="absolute bottom-0 right-0 w-8 h-8 rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
+              disabled={uploading}
+            >
+              {uploading ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Camera className="w-4 h-4" />
+              )}
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => fileInputRef.current?.click()}>
+              <Crop className="w-4 h-4 mr-2" />
+              Upload & Crop
             </DropdownMenuItem>
-          )}
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </div>
+            {currentAvatarUrl && (
+              <DropdownMenuItem onClick={handleRemoveAvatar} className="text-destructive">
+                <Trash2 className="w-4 h-4 mr-2" />
+                Remove photo
+              </DropdownMenuItem>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+
+      {selectedImage && (
+        <ImageCropper
+          imageSrc={selectedImage}
+          onCropComplete={handleCropComplete}
+          onCancel={handleCropCancel}
+          aspect={1}
+          circularCrop={true}
+          isOpen={cropperOpen}
+        />
+      )}
+    </>
   );
 }

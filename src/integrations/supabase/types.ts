@@ -219,6 +219,7 @@ export type Database = {
           album_id: string
           caption: string | null
           created_at: string | null
+          display_order: number | null
           id: string
           image_url: string
           is_public: boolean | null
@@ -230,6 +231,7 @@ export type Database = {
           album_id: string
           caption?: string | null
           created_at?: string | null
+          display_order?: number | null
           id?: string
           image_url: string
           is_public?: boolean | null
@@ -241,6 +243,7 @@ export type Database = {
           album_id?: string
           caption?: string | null
           created_at?: string | null
+          display_order?: number | null
           id?: string
           image_url?: string
           is_public?: boolean | null
