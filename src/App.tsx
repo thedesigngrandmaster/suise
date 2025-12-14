@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
+import { AlbumsProvider } from "@/contexts/AlbumsContext";
 import Index from "./pages/Index";
 import Vault from "./pages/Vault";
 import Explore from "./pages/Explore";
@@ -13,37 +14,35 @@ import Chat from "./pages/Chat";
 import AlbumDetail from "./pages/AlbumDetail";
 import DemoAlbumDetail from "./pages/DemoAlbumDetail";
 import NotFound from "./pages/NotFound";
-import Connect from "./pages/Connect";
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/home" element={<Index />} />
-            <Route path="/vault" element={<Vault />} />
-            <Route path="/explore" element={<Explore />} />
-            <Route path="/connect" element={<Connect />} />
-            <Route path="/settings" element={<Settings />} />
-            <Route path="/chat" element={<Chat />} />
-            <Route path="/chat/:partnerId" element={<Chat />} />
-            <Route path="/chat/:partnerId" element={<Chat />} />
-            <Route path="/album/:albumId" element={<AlbumDetail />} />
-            <Route path="/demo-album/:albumId" element={<DemoAlbumDetail />} />
-            <Route path="/:username" element={<Profile />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/notifications" element={<Index />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
+      <AlbumsProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/home" element={<Index />} />
+              <Route path="/vault" element={<Vault />} />
+              <Route path="/explore" element={<Explore />} />
+              <Route path="/settings" element={<Settings />} />
+              <Route path="/chat" element={<Chat />} />
+              <Route path="/chat/:partnerId" element={<Chat />} />
+              <Route path="/album/:albumId" element={<AlbumDetail />} />
+              <Route path="/demo-album/:albumId" element={<DemoAlbumDetail />} />
+              <Route path="/:username" element={<Profile />} />
+              <Route path="/profile" element={<Profile />} />
+              <Route path="/notifications" element={<Index />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
+      </AlbumsProvider>
     </AuthProvider>
   </QueryClientProvider>
 );
