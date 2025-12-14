@@ -1,16 +1,14 @@
 import { useState } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
-import { useAuth } from "@/hooks/useAuth";
-import { useAlbums, Album } from "@/hooks/useAlbums";
-import { Plus, Heart, Eye, Share2, MoreHorizontal, Trash2, Edit, Users } from "lucide-react";
+import { useAlbumsContext } from "@/contexts/AlbumsContext";
+import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { UploadModal } from "@/components/UploadModal";
 import { AlbumCard } from "@/components/AlbumCard";
 import { useNavigate } from "react-router-dom";
 
 export default function Vault() {
-  const { user } = useAuth();
-  const { albums, loading, deleteAlbum } = useAlbums(user?.id);
+  const { albums, loading, deleteAlbum } = useAlbumsContext();
   const [uploadOpen, setUploadOpen] = useState(false);
   const navigate = useNavigate();
 
