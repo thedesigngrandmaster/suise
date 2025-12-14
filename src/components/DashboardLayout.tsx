@@ -43,7 +43,7 @@ interface DashboardLayoutProps {
 }
 
 export function DashboardLayout({ children, activeTab, onTabChange }: DashboardLayoutProps) {
-  const { user, profile, signOut } = useAuth();
+  const { user, profile } = useAuth();
   const { unreadCount } = useNotifications(user?.id);
   const { totalUnreadCount: unreadMessageCount } = useMessages(user?.id);
   const navigate = useNavigate();
