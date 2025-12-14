@@ -72,10 +72,13 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      {/* Header with brand logo */}
-      <header className="p-6">
+      {/* Fixed Header with brand logo */}
+      <header className="fixed top-0 left-0 right-0 p-6 bg-background/95 backdrop-blur-sm z-50">
         <BrandHeader />
       </header>
+
+      {/* Spacer for fixed header */}
+      <div className="h-20" />
 
       {/* Main content */}
       <main className="flex-1 flex items-center justify-center px-6 pb-6">
@@ -172,31 +175,38 @@ interface LastStepContentProps {
 }
 
 function LastStepContent({ step, onLogin }: LastStepContentProps) {
+  const isImageLeft = step.imagePosition === "left";
+
   return (
-    <div className="flex flex-col items-center gap-8 fade-in-up">
-      {/* Centered illustration */}
-      <div 
-        className="relative w-full max-w-md aspect-square brand-shape-mask"
-        style={{
-          WebkitMaskImage: `url(${step.maskShape})`,
-          maskImage: `url(${step.maskShape})`,
-          filter: "drop-shadow(0 10px 25px rgba(0, 0, 0, 0.15))",
-        }}
-      >
-        <img
-          src={step.image}
-          alt="Onboarding illustration"
-          className="w-full h-full object-cover"
-        />
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center fade-in-up">
+      {/* Image side */}
+      <div className={`${isImageLeft ? "lg:order-1" : "lg:order-2"} flex justify-center`}>
+        <div 
+          className="relative w-full max-w-md aspect-square brand-shape-mask drop-shadow-lg"
+          style={{
+            WebkitMaskImage: `url(${step.maskShape})`,
+            maskImage: `url(${step.maskShape})`,
+            filter: "drop-shadow(0 10px 25px rgba(0, 0, 0, 0.15))",
+          }}
+        >
+          <img
+            src={step.image}
+            alt="Onboarding illustration"
+            className="w-full h-full object-cover"
+          />
+        </div>
       </div>
 
-      {/* Centered title */}
-      <h2 className="text-3xl lg:text-4xl font-bold font-bricolage text-secondary text-center">
-        {step.highlight}
-      </h2>
+      {/* Login form side */}
+      <div className={`${isImageLeft ? "lg:order-2" : "lg:order-1"} flex flex-col items-center lg:items-start gap-6`}>
+        {/* Title at the top */}
+        <h2 className="text-3xl lg:text-4xl font-bold font-bricolage text-secondary text-center lg:text-left">
+          {step.highlight}
+        </h2>
 
-      {/* ZKLogin modal */}
-      <ZKLoginModal onLogin={onLogin} />
+        {/* ZKLogin modal */}
+        <ZKLoginModal onLogin={onLogin} />
+      </div>
     </div>
   );
 }
