@@ -96,13 +96,28 @@ export function useMessages(userId?: string) {
     if (!error && data) {
       setMessages(data);
       
-      // Mark as read
-      await supabase
-        .from("messages")
-        .update({ read: true })
-        .eq("sender_id", partnerId)
-        .eq("receiver_id", userId)
-        .eq("read", false);
+      // Find unread messages from the partner
+      const unreadIds = data
+        .filter((msg: Message) => msg.sender_id === partnerId && msg.receiver_id === userId && !msg.read)
+        .map((msg: Message) => msg.id);
+      
+      if (unreadIds.length > 0) {
+        // Mark as read in database
+        await supabase
+          .from("messages")
+          .update({ read: true })
+          .in("id", unreadIds);
+        
+        // Update local state immediately
+        setMessages((prev) =>
+          prev.map((msg) =>
+            unreadIds.includes(msg.id) ? { ...msg, read: true } : msg
+          )
+        );
+        
+        // Update total unread count
+        setTotalUnreadCount((prev) => Math.max(0, prev - unreadIds.length));
+      }
       
       // Refresh threads to update unread count
       fetchThreads();
@@ -127,6 +142,50 @@ export function useMessages(userId?: string) {
 
   useEffect(() => {
     fetchThreads();
+  }, [userId]);
+
+  // Real-time subscription for new messages
+  useEffect(() => {
+    if (!userId) return;
+
+    const channel = supabase
+      .channel(`messages-${userId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "messages",
+          filter: `receiver_id=eq.${userId}`,
+        },
+        (payload) => {
+          const newMessage = payload.new as Message;
+          setMessages((prev) => [...prev, newMessage]);
+          fetchThreads(); // Refresh threads to update unread count
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "messages",
+        },
+        (payload) => {
+          const updatedMessage = payload.new as Message;
+          setMessages((prev) =>
+            prev.map((msg) =>
+              msg.id === updatedMessage.id ? updatedMessage : msg
+            )
+          );
+          fetchThreads();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [userId]);
 
   return {

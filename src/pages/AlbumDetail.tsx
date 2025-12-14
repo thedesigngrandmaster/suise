@@ -401,13 +401,13 @@ export default function AlbumDetail() {
         {/* Stats */}
         <div className="flex gap-6 mb-6 text-sm text-muted-foreground">
           <span className="flex items-center gap-1">
-            <Eye className="w-4 h-4" /> {album.view_count || 0} views
+            <Eye className="w-4 h-4" /> {album.view_count || 0} {album.view_count === 1 ? "view" : "views"}
           </span>
           <span className="flex items-center gap-1">
-            <Heart className="w-4 h-4" /> {album.love_count || 0} loves
+            <Heart className="w-4 h-4" /> {album.love_count || 0} {album.love_count === 1 ? "love" : "loves"}
           </span>
           <span className="flex items-center gap-1">
-            <Share2 className="w-4 h-4" /> {album.share_count || 0} shares
+            <Share2 className="w-4 h-4" /> {album.share_count || 0} {album.share_count === 1 ? "share" : "shares"}
           </span>
         </div>
 

@@ -13,6 +13,7 @@ export interface Album {
   love_count: number;
   share_count: number;
   created_at: string;
+  first_memory_url?: string | null;
   owner?: {
     id: string;
     username: string | null;
@@ -44,7 +45,8 @@ export function useAlbums(userId?: string) {
       .select(`
         *,
         owner:profiles!albums_owner_id_fkey(id, username, display_name, avatar_url, wallet_address),
-        co_owners:album_co_owners(user_id, user:profiles(username, display_name, avatar_url))
+        co_owners:album_co_owners(user_id, user:profiles(username, display_name, avatar_url)),
+        memories(image_url, display_order)
       `)
       .or(`owner_id.eq.${userId},album_co_owners.user_id.eq.${userId}`)
       .order("created_at", { ascending: false });
@@ -52,7 +54,16 @@ export function useAlbums(userId?: string) {
     if (error) {
       console.error("Error fetching albums:", error);
     } else {
-      setAlbums(data || []);
+      // Get first memory for each album
+      const albumsWithFirstMemory = (data || []).map(album => {
+        const sortedMemories = album.memories?.sort((a: any, b: any) => (a.display_order || 0) - (b.display_order || 0));
+        return {
+          ...album,
+          first_memory_url: sortedMemories?.[0]?.image_url || null,
+          memories: undefined, // Remove memories from album object
+        };
+      });
+      setAlbums(albumsWithFirstMemory);
     }
     setLoading(false);
   };
@@ -90,7 +101,8 @@ export function useAlbums(userId?: string) {
       .select(`
         *,
         owner:profiles!albums_owner_id_fkey(id, username, display_name, avatar_url, wallet_address),
-        co_owners:album_co_owners(user_id, user:profiles(username, display_name, avatar_url))
+        co_owners:album_co_owners(user_id, user:profiles(username, display_name, avatar_url)),
+        memories(image_url, display_order)
       `)
       .eq("is_public", true)
       .order("love_count", { ascending: false })
@@ -99,7 +111,16 @@ export function useAlbums(userId?: string) {
     if (error) {
       console.error("Error fetching public albums:", error);
     } else {
-      setAlbums(data || []);
+      // Get first memory for each album
+      const albumsWithFirstMemory = (data || []).map(album => {
+        const sortedMemories = album.memories?.sort((a: any, b: any) => (a.display_order || 0) - (b.display_order || 0));
+        return {
+          ...album,
+          first_memory_url: sortedMemories?.[0]?.image_url || null,
+          memories: undefined,
+        };
+      });
+      setAlbums(albumsWithFirstMemory);
     }
     setLoading(false);
   };
