@@ -121,7 +121,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       message,
     });
 
-    await fetch("/api/auth/slush", {
+   const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/auth-slush`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -130,6 +130,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         signature,
       }),
     });
+
+    const session = await res.json();
+
+await supabase.auth.setSession(session);
+
+    if (error) {
+      toast.error("Failed to sign in with Slush", { description: error.message });
+      throw error;
   };
 
   // ✅ Now using the hook declared at top level
@@ -148,7 +156,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const signature = await phantomWallet.signMessage!(message);
 
-    await fetch("/api/auth/phantom", {
+    const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/auth-phantom`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -158,11 +166,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }),
     });
 
-    const isValid = nacl.sign.detached.verify(
-      message,
-      signature,
-      bs58.decode(publicKey)
-    );
+    const session = await res.json();
+
+await supabase.auth.setSession(session);
+
+    if (error) {
+      toast.error("Failed to sign in with Phantom", { description: error.message });
+      throw error;
   };
 
   const signInWithEmail = async (email: string, password: string) => {

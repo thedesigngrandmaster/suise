@@ -73,7 +73,7 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* Fixed Header with brand logo */}
-      <header className="fixed top-0 left-0 right-0 p-4 bg-background/95 backdrop-blur-sm z-50">
+      <header className="fixed top-0 left-0 right-0 pt-4 pr-8 pb-4 pl-1 bg-background/95 backdrop-blur-sm z-50">
         <BrandHeader />
       </header>
 
