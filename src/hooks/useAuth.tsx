@@ -2,6 +2,10 @@ import { createContext, useContext, useEffect, useState, ReactNode } from "react
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useWallet as useSuiWallet } from "@suiet/wallet-kit";
+import { useWallet as usePhantomWallet } from "@solana/wallet-adapter-react";
+import nacl from "tweetnacl";
+import bs58 from "bs58";
 
 interface Profile {
   id: string;
@@ -25,6 +29,8 @@ interface AuthContextType {
   profile: Profile | null;
   loading: boolean;
   signInWithGoogle: () => Promise<void>;
+  signInWithSlush: () => Promise<void>;
+  signInWithPhantom: () => Promise<void>;
   signInWithEmail: (email: string, password: string) => Promise<{ error: Error | null }>;
   signUpWithEmail: (email: string, password: string, displayName?: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
@@ -38,6 +44,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
+  
+  const suiWallet = useSuiWallet();
+  const phantomWallet = usePhantomWallet();
 
   const fetchProfile = async (userId: string) => {
     const { data, error } = await supabase
@@ -61,14 +70,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
-    // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, newSession) => {
         setSession(newSession);
         setUser(newSession?.user ?? null);
 
         if (newSession?.user) {
-          // Defer profile fetch to avoid deadlock
           setTimeout(() => {
             fetchProfile(newSession.user.id).then(setProfile);
           }, 0);
@@ -78,7 +85,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     );
 
-    // Check for existing session
     supabase.auth.getSession().then(({ data: { session: existingSession } }) => {
       setSession(existingSession);
       setUser(existingSession?.user ?? null);
@@ -103,6 +109,60 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       toast.error("Failed to sign in with Google", { description: error.message });
       throw error;
     }
+  };
+
+  // ✅ Now using the hook declared at top level
+  const signInWithSlush = async () => {
+    await suiWallet.connect();
+    const address = suiWallet.address;
+    const message = "Sign in to Suise";
+
+    const signature = await suiWallet.signMessage({
+      message,
+    });
+
+    await fetch("/api/auth/slush", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        address,
+        message,
+        signature,
+      }),
+    });
+  };
+
+  // ✅ Now using the hook declared at top level
+  const signInWithPhantom = async () => {
+    if (!phantomWallet.connected) {
+      await phantomWallet.connect();
+    }
+
+    const publicKey = phantomWallet.publicKey!.toBase58();
+
+    const { nonce } = await fetch("/api/auth/nonce").then(r => r.json());
+
+    const message = new TextEncoder().encode(
+      `Sign in to Suise\nNonce: ${nonce}`
+    );
+
+    const signature = await phantomWallet.signMessage!(message);
+
+    await fetch("/api/auth/phantom", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        publicKey,
+        signature: Array.from(signature),
+        nonce,
+      }),
+    });
+
+    const isValid = nacl.sign.detached.verify(
+      message,
+      signature,
+      bs58.decode(publicKey)
+    );
   };
 
   const signInWithEmail = async (email: string, password: string) => {
@@ -145,19 +205,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        session,
-        profile,
-        loading,
-        signInWithGoogle,
-        signInWithEmail,
-        signUpWithEmail,
-        signOut,
-        refreshProfile,
-      }}
-    >
+    <AuthContext.Provider value={{ user, session, profile, loading, signInWithGoogle, signInWithSlush, signInWithPhantom, signInWithEmail, signUpWithEmail, signOut, refreshProfile }}>
       {children}
     </AuthContext.Provider>
   );

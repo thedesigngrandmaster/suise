@@ -1,10 +1,5 @@
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { AuthProvider } from "@/hooks/useAuth";
-import { AlbumsProvider } from "@/contexts/AlbumsContext";
+import { Routes, Route } from "react-router-dom";
+
 import Index from "./pages/Index";
 import Vault from "./pages/Vault";
 import Explore from "./pages/Explore";
@@ -16,37 +11,23 @@ import AlbumDetail from "./pages/AlbumDetail";
 import DemoAlbumDetail from "./pages/DemoAlbumDetail";
 import NotFound from "./pages/NotFound";
 
-const queryClient = new QueryClient();
-
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <AuthProvider>
-      <AlbumsProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/home" element={<Index />} />
-              <Route path="/vault" element={<Vault />} />
-              <Route path="/explore" element={<Explore />} />
-              <Route path="/connect" element={<Connect />} />
-              <Route path="/settings" element={<Settings />} />
-              <Route path="/chat" element={<Chat />} />
-              <Route path="/chat/:partnerId" element={<Chat />} />
-              <Route path="/album/:albumId" element={<AlbumDetail />} />
-              <Route path="/demo-album/:albumId" element={<DemoAlbumDetail />} />
-              <Route path="/:username" element={<Profile />} />
-              <Route path="/profile" element={<Profile />} />
-              <Route path="/notifications" element={<Index />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-        </TooltipProvider>
-      </AlbumsProvider>
-    </AuthProvider>
-  </QueryClientProvider>
+  <Routes>
+    <Route path="/" element={<Index />} />
+    <Route path="/home" element={<Index />} />
+    <Route path="/vault" element={<Vault />} />
+    <Route path="/explore" element={<Explore />} />
+    <Route path="/connect" element={<Connect />} />
+    <Route path="/settings" element={<Settings />} />
+    <Route path="/chat" element={<Chat />} />
+    <Route path="/chat/:partnerId" element={<Chat />} />
+    <Route path="/album/:albumId" element={<AlbumDetail />} />
+    <Route path="/demo-album/:albumId" element={<DemoAlbumDetail />} />
+    <Route path="/:username" element={<Profile />} />
+    <Route path="/profile" element={<Profile />} />
+    <Route path="/notifications" element={<Index />} />
+    <Route path="*" element={<NotFound />} />
+  </Routes>
 );
 
 export default App;

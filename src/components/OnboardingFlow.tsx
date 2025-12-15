@@ -42,8 +42,8 @@ const steps: OnboardingStep[] = [
     maskShape: brandShapeLeft,
   },
   {
-    title: "",
-    highlight: "Ready to start",
+    title: "A place for what matters.",
+    highlight: "Ready to start?",
     image: lastScreen,
     imagePosition: "left",
     maskShape: brandShapeLeft,
@@ -73,7 +73,7 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* Fixed Header with brand logo */}
-      <header className="fixed top-0 left-0 right-0 p-6 bg-background/95 backdrop-blur-sm z-50">
+      <header className="fixed top-0 left-0 right-0 p-4 bg-background/95 backdrop-blur-sm z-50">
         <BrandHeader />
       </header>
 
@@ -186,7 +186,7 @@ function LastStepContent({ step, onLogin }: LastStepContentProps) {
           style={{
             WebkitMaskImage: `url(${step.maskShape})`,
             maskImage: `url(${step.maskShape})`,
-            filter: "drop-shadow(0 10px 25px rgba(0, 0, 0, 0.15))",
+            filter: "drop-shadow(0 10px 25px rgba(0, 0, 0, 0.3))",
           }}
         >
           <img
