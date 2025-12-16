@@ -42,15 +42,19 @@ interface AlbumsContextType {
     is_public?: boolean;
     cover_image_url?: string;
   }) => Promise<{ album?: Album; error: Error | null }>;
-  updateAlbum: (albumId: string, data: {
-    title?: string;
-    description?: string;
-    is_public?: boolean;
-    cover_image_url?: string;
-  }) => Promise<{ error: Error | null }>;
+  updateAlbum: (
+    albumId: string,
+    data: {
+      title?: string;
+      description?: string;
+      is_public?: boolean;
+      cover_image_url?: string;
+    }
+  ) => Promise<{ error: Error | null }>;
   deleteAlbum: (albumId: string) => Promise<{ error: Error | null }>;
   refreshAlbums: () => Promise<void>;
   fetchPublicAlbums: (limit?: number) => Promise<void>;
+  fetchAlbumById: (albumId: string) => Promise<Album | null>;
 }
 
 const AlbumsContext = createContext<AlbumsContextType | undefined>(undefined);
@@ -60,33 +64,44 @@ export function AlbumsProvider({ children }: { children: ReactNode }) {
   const [albums, setAlbums] = useState<Album[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // ============================
+  // Fetch albums owned or co-owned by user
+  // ============================
   const fetchUserAlbums = async () => {
     if (!user?.id) {
       setAlbums([]);
       setLoading(false);
       return;
     }
-    
+
     setLoading(true);
-    
+
     const { data, error } = await supabase
       .from("albums")
       .select(`
         *,
-        owner:profiles!albums_owner_id_fkey(id, username, display_name, avatar_url, wallet_address),
-        co_owners:album_co_owners(user_id, user:profiles(username, display_name, avatar_url)),
+        owner:profiles!albums_owner_id_fkey(
+          id, username, display_name, avatar_url, wallet_address
+        ),
+        co_owners:album_co_owners(
+          user_id,
+          user:profiles(username, display_name, avatar_url)
+        ),
         memories(image_url, display_order)
       `)
-      .or(`owner_id.eq.${user.id},album_co_owners.user_id.eq.${user.id}`)
+      .or(
+        `owner_id.eq.${user.id},album_co_owners.user_id.eq.${user.id}`
+      )
       .order("created_at", { ascending: false });
 
     if (error) {
       console.error("Error fetching albums:", error);
       setAlbums([]);
     } else {
-      const albumsWithFirstMemory = (data || []).map(album => {
-        const sortedMemories = album.memories?.sort((a: any, b: any) => 
-          (a.display_order || 0) - (b.display_order || 0)
+      const processed = (data || []).map((album) => {
+        const sortedMemories = album.memories?.sort(
+          (a: any, b: any) =>
+            (a.display_order || 0) - (b.display_order || 0)
         );
         return {
           ...album,
@@ -94,20 +109,29 @@ export function AlbumsProvider({ children }: { children: ReactNode }) {
           memories: undefined,
         };
       });
-      setAlbums(albumsWithFirstMemory);
+      setAlbums(processed);
     }
+
     setLoading(false);
   };
 
+  // ============================
+  // Fetch public albums (explore)
+  // ============================
   const fetchPublicAlbums = async (limit = 50) => {
     setLoading(true);
-    
+
     const { data, error } = await supabase
       .from("albums")
       .select(`
         *,
-        owner:profiles!albums_owner_id_fkey(id, username, display_name, avatar_url, wallet_address),
-        co_owners:album_co_owners(user_id, user:profiles(username, display_name, avatar_url)),
+        owner:profiles!albums_owner_id_fkey(
+          id, username, display_name, avatar_url, wallet_address
+        ),
+        co_owners:album_co_owners(
+          user_id,
+          user:profiles(username, display_name, avatar_url)
+        ),
         memories(image_url, display_order)
       `)
       .eq("is_public", true)
@@ -117,9 +141,10 @@ export function AlbumsProvider({ children }: { children: ReactNode }) {
     if (error) {
       console.error("Error fetching public albums:", error);
     } else {
-      const albumsWithFirstMemory = (data || []).map(album => {
-        const sortedMemories = album.memories?.sort((a: any, b: any) => 
-          (a.display_order || 0) - (b.display_order || 0)
+      const processed = (data || []).map((album) => {
+        const sortedMemories = album.memories?.sort(
+          (a: any, b: any) =>
+            (a.display_order || 0) - (b.display_order || 0)
         );
         return {
           ...album,
@@ -127,11 +152,54 @@ export function AlbumsProvider({ children }: { children: ReactNode }) {
           memories: undefined,
         };
       });
-      setAlbums(albumsWithFirstMemory);
+      setAlbums(processed);
     }
+
     setLoading(false);
   };
 
+  // ============================
+  // Fetch single album by ID (PUBLIC-SAFE)
+  // ============================
+  const fetchAlbumById = async (albumId: string): Promise<Album | null> => {
+    const { data, error } = await supabase
+      .from("albums")
+      .select(`
+        *,
+        owner:profiles!albums_owner_id_fkey(
+          id, username, display_name, avatar_url, wallet_address
+        ),
+        co_owners:album_co_owners(
+          user_id,
+          user:profiles(username, display_name, avatar_url)
+        ),
+        memories(image_url, display_order)
+      `)
+      .eq("id", albumId)
+      .maybeSingle();
+
+    if (error) {
+      console.error("Error fetching album:", error);
+      return null;
+    }
+
+    if (!data) return null;
+
+    const sortedMemories = data.memories?.sort(
+      (a: any, b: any) =>
+        (a.display_order || 0) - (b.display_order || 0)
+    );
+
+    return {
+      ...data,
+      first_memory_url: sortedMemories?.[0]?.image_url || null,
+      memories: undefined,
+    };
+  };
+
+  // ============================
+  // CRUD
+  // ============================
   const createAlbum = async (data: {
     title: string;
     description?: string;
@@ -151,8 +219,13 @@ export function AlbumsProvider({ children }: { children: ReactNode }) {
       })
       .select(`
         *,
-        owner:profiles!albums_owner_id_fkey(id, username, display_name, avatar_url, wallet_address),
-        co_owners:album_co_owners(user_id, user:profiles(username, display_name, avatar_url))
+        owner:profiles!albums_owner_id_fkey(
+          id, username, display_name, avatar_url, wallet_address
+        ),
+        co_owners:album_co_owners(
+          user_id,
+          user:profiles(username, display_name, avatar_url)
+        )
       `)
       .single();
 
@@ -160,21 +233,21 @@ export function AlbumsProvider({ children }: { children: ReactNode }) {
       toast.error("Failed to create album", { description: error.message });
       return { error };
     }
-    
+
     toast.success("Album created!");
-    
-    // Immediately add to state for instant UI update
-    setAlbums(prev => [{...album, first_memory_url: null}, ...prev]);
-    
+    setAlbums((prev) => [{ ...album, first_memory_url: null }, ...prev]);
     return { album, error: null };
   };
 
-  const updateAlbum = async (albumId: string, data: {
-    title?: string;
-    description?: string;
-    is_public?: boolean;
-    cover_image_url?: string;
-  }) => {
+  const updateAlbum = async (
+    albumId: string,
+    data: {
+      title?: string;
+      description?: string;
+      is_public?: boolean;
+      cover_image_url?: string;
+    }
+  ) => {
     const { error } = await supabase
       .from("albums")
       .update({ ...data, updated_at: new Date().toISOString() })
@@ -184,36 +257,31 @@ export function AlbumsProvider({ children }: { children: ReactNode }) {
       toast.error("Failed to update album", { description: error.message });
       return { error };
     }
-    
+
     toast.success("Album updated!");
     await fetchUserAlbums();
     return { error: null };
   };
 
   const deleteAlbum = async (albumId: string) => {
-    const { error } = await supabase
-      .from("albums")
-      .delete()
-      .eq("id", albumId);
+    const { error } = await supabase.from("albums").delete().eq("id", albumId);
 
     if (error) {
       toast.error("Failed to delete album", { description: error.message });
       return { error };
     }
-    
+
     toast.success("Album deleted");
-    
-    // Immediately remove from state for instant UI update
-    setAlbums(prev => prev.filter(album => album.id !== albumId));
-    
+    setAlbums((prev) => prev.filter((a) => a.id !== albumId));
     return { error: null };
   };
 
-  // Real-time subscriptions
+  // ============================
+  // Realtime subscriptions
+  // ============================
   useEffect(() => {
     if (!user?.id) return;
 
-    // Subscribe to albums changes
     const albumsChannel = supabase
       .channel(`user-albums-${user.id}`)
       .on(
@@ -224,14 +292,10 @@ export function AlbumsProvider({ children }: { children: ReactNode }) {
           table: "albums",
           filter: `owner_id=eq.${user.id}`,
         },
-        (payload) => {
-          console.log("Album change detected:", payload);
-          fetchUserAlbums();
-        }
+        fetchUserAlbums
       )
       .subscribe();
 
-    // Subscribe to co-owners changes
     const coOwnersChannel = supabase
       .channel(`user-co-owned-albums-${user.id}`)
       .on(
@@ -242,10 +306,7 @@ export function AlbumsProvider({ children }: { children: ReactNode }) {
           table: "album_co_owners",
           filter: `user_id=eq.${user.id}`,
         },
-        () => {
-          console.log("Co-owner change detected");
-          fetchUserAlbums();
-        }
+        fetchUserAlbums
       )
       .subscribe();
 
@@ -255,7 +316,6 @@ export function AlbumsProvider({ children }: { children: ReactNode }) {
     };
   }, [user?.id]);
 
-  // Initial fetch
   useEffect(() => {
     fetchUserAlbums();
   }, [user?.id]);
@@ -270,6 +330,7 @@ export function AlbumsProvider({ children }: { children: ReactNode }) {
         deleteAlbum,
         refreshAlbums: fetchUserAlbums,
         fetchPublicAlbums,
+        fetchAlbumById,
       }}
     >
       {children}
@@ -279,8 +340,10 @@ export function AlbumsProvider({ children }: { children: ReactNode }) {
 
 export function useAlbumsContext() {
   const context = useContext(AlbumsContext);
-  if (context === undefined) {
-    throw new Error("useAlbumsContext must be used within an AlbumsProvider");
+  if (!context) {
+    throw new Error(
+      "useAlbumsContext must be used within an AlbumsProvider"
+    );
   }
   return context;
 }
