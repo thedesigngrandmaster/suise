@@ -1,74 +1,53 @@
 import { serve } from "https://deno.land/std/http/server.ts";
-import nacl from "npm:tweetnacl";
-import bs58 from "npm:bs58";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import nacl from "https://esm.sh/tweetnacl";
+import bs58 from "https://esm.sh/bs58";
+import { createClient } from "https://esm.sh/@supabase/supabase-js";
 
 serve(async (req) => {
-  const { publicKey, signature, nonce } = await req.json();
-
-  if (!publicKey || !signature || !nonce) {
-    return new Response("Missing fields", { status: 400 });
-  }
-
-  const message = new TextEncoder().encode(
-    `Sign in to Suise\nNonce: ${nonce}`
-  );
-
-  const isValid = nacl.sign.detached.verify(
-    message,
-    new Uint8Array(signature),
-    bs58.decode(publicKey)
-  );
-
-  if (!isValid) {
-    return new Response("Invalid signature", { status: 401 });
-  }
-
   const supabase = createClient(
     Deno.env.get("SUPABASE_URL")!,
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
   );
 
-  // Check nonce
+  const { publicKey, signature, message, nonce } = await req.json();
+
+  // 1. Verify nonce
   const { data: nonceRow } = await supabase
-    .from("wallet_nonces")
+    .from("auth_nonces")
     .select("*")
-    .eq("wallet_address", publicKey)
+    .eq("address", publicKey)
+    .eq("nonce", nonce)
     .single();
 
-  if (!nonceRow || nonceRow.nonce !== nonce || new Date(nonceRow.expires_at) < new Date()) {
-    return new Response("Invalid or expired nonce", { status: 401 });
+  if (!nonceRow) {
+    return new Response("Invalid nonce", { status: 401 });
   }
 
-  // Remove nonce after use
-  await supabase.from("wallet_nonces").delete().eq("wallet_address", publicKey);
+  await supabase.from("auth_nonces").delete().eq("id", nonceRow.id);
 
-  // Find or create user
-  const { data: walletUser } = await supabase
-    .from("wallet_users")
-    .select("user_id")
-    .eq("wallet_address", publicKey)
-    .single();
+  // 2. Verify signature
+  const verified = nacl.sign.detached.verify(
+    new TextEncoder().encode(message),
+    new Uint8Array(signature),
+    bs58.decode(publicKey)
+  );
 
-  let userId = walletUser?.user_id;
-
-  if (!userId) {
-    const { data: newUser } = await supabase.auth.admin.createUser({
-      email: `${publicKey}@wallet.suise`,
-      email_confirm: true,
-    });
-
-    userId = newUser.user.id;
-
-    await supabase.from("wallet_users").insert({
-      wallet_type: "phantom",
-      wallet_address: publicKey,
-      user_id: userId,
-    });
+  if (!verified) {
+    return new Response("Invalid signature", { status: 401 });
   }
 
-  // Create session
-  const { data: session } = await supabase.auth.admin.createSession({ user_id: userId });
+  // 3. Create user
+  await supabase.auth.admin.createUser({
+    email: `${publicKey}@phantom.suise`,
+    user_metadata: { wallet: publicKey, provider: "phantom" },
+    email_confirm: true,
+  });
+
+  // 4. Return session
+  const session = await supabase.auth.admin.generateLink({
+    type: "magiclink",
+    email: `${publicKey}@phantom.suise`,
+  });
 
   return new Response(JSON.stringify(session), {
     headers: { "Content-Type": "application/json" },
