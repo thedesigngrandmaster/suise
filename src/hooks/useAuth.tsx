@@ -4,8 +4,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useWallet as useSuiWallet } from "@suiet/wallet-kit";
 import { useWallet as usePhantomWallet } from "@solana/wallet-adapter-react";
-import nacl from "tweetnacl";
-import bs58 from "bs58";
 
 interface Profile {
   id: string;
@@ -44,53 +42,45 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
-  
+
   const suiWallet = useSuiWallet();
   const phantomWallet = usePhantomWallet();
 
   const fetchProfile = async (userId: string) => {
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from("profiles")
       .select("*")
       .eq("id", userId)
       .maybeSingle();
 
-    if (error) {
-      console.error("Error fetching profile:", error);
-      return null;
-    }
     return data;
   };
 
   const refreshProfile = async () => {
-    if (user) {
-      const profileData = await fetchProfile(user.id);
-      setProfile(profileData);
-    }
+    if (!user) return;
+    const profileData = await fetchProfile(user.id);
+    setProfile(profileData);
   };
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, newSession) => {
+      (_, newSession) => {
         setSession(newSession);
         setUser(newSession?.user ?? null);
 
         if (newSession?.user) {
-          setTimeout(() => {
-            fetchProfile(newSession.user.id).then(setProfile);
-          }, 0);
+          fetchProfile(newSession.user.id).then(setProfile);
         } else {
           setProfile(null);
         }
       }
     );
 
-    supabase.auth.getSession().then(({ data: { session: existingSession } }) => {
-      setSession(existingSession);
-      setUser(existingSession?.user ?? null);
-      
-      if (existingSession?.user) {
-        fetchProfile(existingSession.user.id).then(setProfile);
+    supabase.auth.getSession().then(({ data }) => {
+      setSession(data.session);
+      setUser(data.session?.user ?? null);
+      if (data.session?.user) {
+        fetchProfile(data.session.user.id).then(setProfile);
       }
       setLoading(false);
     });
@@ -101,87 +91,79 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signInWithGoogle = async () => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: {
-        redirectTo: `${window.location.origin}/`,
-      },
+      options: { redirectTo: window.location.origin },
     });
+
     if (error) {
-      toast.error("Failed to sign in with Google", { description: error.message });
+      toast.error("Google sign-in failed", { description: error.message });
       throw error;
     }
   };
 
-  // ✅ Now using the hook declared at top level
   const signInWithSlush = async () => {
     await suiWallet.connect();
-    const address = suiWallet.address;
-    const message = "Sign in to Suise";
 
-    const signature = await suiWallet.signMessage({
-      message,
-    });
+    const res = await fetch(
+      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/auth-slush`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({
+          address: suiWallet.address,
+          message: "Sign in to Suise",
+        }),
+      }
+    );
 
-   const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/auth-slush`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        address,
-        message,
-        signature,
-      }),
-    });
+    if (!res.ok) {
+      const err = await res.text();
+      toast.error("Slush login failed", { description: err });
+      throw new Error(err);
+    }
 
     const session = await res.json();
-
-await supabase.auth.setSession(session);
-
-    if (error) {
-      toast.error("Failed to sign in with Slush", { description: error.message });
-      throw error;
+    await supabase.auth.setSession(session);
   };
 
-  // ✅ Now using the hook declared at top level
   const signInWithPhantom = async () => {
     if (!phantomWallet.connected) {
       await phantomWallet.connect();
     }
 
-    const publicKey = phantomWallet.publicKey!.toBase58();
-
-    const { nonce } = await fetch("/api/auth/nonce").then(r => r.json());
-
-    const message = new TextEncoder().encode(
-      `Sign in to Suise\nNonce: ${nonce}`
+    const res = await fetch(
+      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/auth-phantom`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({
+          publicKey: phantomWallet.publicKey?.toBase58(),
+          message: "Sign in to Suise",
+        }),
+      }
     );
 
-    const signature = await phantomWallet.signMessage!(message);
-
-    const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/auth-phantom`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        publicKey,
-        signature: Array.from(signature),
-        nonce,
-      }),
-    });
+    if (!res.ok) {
+      const err = await res.text();
+      toast.error("Phantom login failed", { description: err });
+      throw new Error(err);
+    }
 
     const session = await res.json();
-
-await supabase.auth.setSession(session);
-
-    if (error) {
-      toast.error("Failed to sign in with Phantom", { description: error.message });
-      throw error;
+    await supabase.auth.setSession(session);
   };
 
   const signInWithEmail = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
-      toast.error("Failed to sign in", { description: error.message });
+      toast.error("Sign-in failed", { description: error.message });
       return { error };
     }
-    toast.success("Welcome back!", { description: "Successfully signed in" });
     return { error: null };
   };
 
@@ -190,32 +172,38 @@ await supabase.auth.setSession(session);
       email,
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/`,
-        data: {
-          full_name: displayName || email.split("@")[0],
-        },
+        data: { full_name: displayName },
       },
     });
+
     if (error) {
-      toast.error("Failed to sign up", { description: error.message });
+      toast.error("Sign-up failed", { description: error.message });
       return { error };
     }
-    toast.success("Welcome to Suise!", { description: "Account created successfully" });
     return { error: null };
   };
 
   const signOut = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      toast.error("Failed to sign out", { description: error.message });
-      throw error;
-    }
+    await supabase.auth.signOut();
     setProfile(null);
-    toast.success("Signed out successfully");
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, profile, loading, signInWithGoogle, signInWithSlush, signInWithPhantom, signInWithEmail, signUpWithEmail, signOut, refreshProfile }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        session,
+        profile,
+        loading,
+        signInWithGoogle,
+        signInWithSlush,
+        signInWithPhantom,
+        signInWithEmail,
+        signUpWithEmail,
+        signOut,
+        refreshProfile,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
