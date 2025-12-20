@@ -36,6 +36,58 @@ export function useAlbums(userId?: string) {
   const [albums, setAlbums] = useState<Album[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // ADD THIS DEBUG LOG
+  console.log('useAlbums - userId:', userId);
+
+  const createAlbum = async (data: {
+    title: string;
+    description?: string;
+    is_public?: boolean;
+    cover_image_url?: string;
+  }) => {
+    // ADD THESE DEBUG LOGS
+    console.log('createAlbum called');
+    console.log('userId in createAlbum:', userId);
+    console.log('data:', data);
+
+    if (!userId) {
+      console.error('No userId - user not authenticated');
+      toast.error("Not authenticated");
+      return { error: new Error("Not authenticated") };
+    }
+
+    try {
+      const { data: album, error } = await supabase
+        .from("albums")
+        .insert({
+          owner_id: userId, // Make sure this is userId, not 'user'
+          title: data.title,
+          description: data.description,
+          is_public: data.is_public ?? false,
+          cover_image_url: data.cover_image_url,
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error('createAlbum error:', error);
+        toast.error("Failed to create album", { description: error.message });
+        return { error };
+      }
+      
+      console.log('Album created successfully:', album);
+      toast.success("Album created!");
+      
+      await fetchUserAlbums();
+      
+      return { album, error: null };
+    } catch (err) {
+      console.error('createAlbum exception:', err);
+      toast.error("Failed to create album");
+      return { error: err };
+    }
+  };
+
   const fetchUserAlbums = async () => {
     if (!userId) return;
     setLoading(true);
