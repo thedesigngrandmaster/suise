@@ -20,11 +20,22 @@ interface UserProfile {
 
 export default function Connect() {
   const { user } = useAuth();
-  const { connections, pendingRequests, acceptRequest, rejectRequest, loading, sendRequest, hasSentRequest, isConnected } = useConnections(user?.id);
+  const { 
+    connections, 
+    pendingRequests, 
+    acceptRequest, 
+    rejectRequest, 
+    loading, 
+    sendRequest, 
+    hasSentRequest, 
+    isConnected,
+    refetch 
+  } = useConnections(user?.id);
   const navigate = useNavigate();
   const [allUsers, setAllUsers] = useState<UserProfile[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [processingRequest, setProcessingRequest] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -71,7 +82,23 @@ export default function Connect() {
   };
 
   const handleConnect = async (userId: string) => {
+    setProcessingRequest(userId);
     await sendRequest(userId);
+    setProcessingRequest(null);
+  };
+
+  const handleAcceptRequest = async (connectionId: string) => {
+    setProcessingRequest(connectionId);
+    await acceptRequest(connectionId);
+    setProcessingRequest(null);
+    // Refresh to update UI
+    await refetch();
+  };
+
+  const handleRejectRequest = async (connectionId: string) => {
+    setProcessingRequest(connectionId);
+    await rejectRequest(connectionId);
+    setProcessingRequest(null);
   };
 
   return (
@@ -139,12 +166,14 @@ export default function Connect() {
                 <div className="space-y-3">
                   {filteredUsers.map((profile) => {
                     const status = getConnectionStatus(profile.id);
+                    const isProcessing = processingRequest === profile.id;
+                    
                     return (
                       <div
                         key={profile.id}
                         className="flex items-center gap-3 p-4 bg-card rounded-2xl border border-border hover:border-secondary/50 transition-colors"
                       >
-                      <button onClick={() => navigate(`/${profile.username}`)}>
+                        <button onClick={() => navigate(`/${profile.username}`)}>
                           <Avatar className="w-12 h-12">
                             <AvatarImage src={profile.avatar_url || undefined} />
                             <AvatarFallback className="bg-secondary/20">
@@ -174,7 +203,15 @@ export default function Connect() {
                             Request Sent
                           </Button>
                         ) : status === "pending" ? (
-                          <Button size="sm" variant="outline" disabled>
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={() => {
+                              // Switch to requests tab when they have a pending request
+                              const tabsTrigger = document.querySelector('[value="requests"]') as HTMLElement;
+                              tabsTrigger?.click();
+                            }}
+                          >
                             Respond
                           </Button>
                         ) : (
@@ -182,8 +219,9 @@ export default function Connect() {
                             size="sm"
                             variant="suise"
                             onClick={() => handleConnect(profile.id)}
+                            disabled={isProcessing}
                           >
-                            Connect
+                            {isProcessing ? "Connecting..." : "Connect"}
                           </Button>
                         )}
                       </div>
@@ -216,47 +254,57 @@ export default function Connect() {
               </div>
             ) : (
               <div className="space-y-3">
-                {pendingRequests.map((request) => (
-                  <div
-                    key={request.id}
-                    className="flex items-center gap-3 p-4 bg-card rounded-2xl border border-border"
-                  >
-                    <button onClick={() => navigate(`/${request.requester?.username}`)}>
-                      <Avatar className="w-12 h-12">
-                        <AvatarImage src={request.requester?.avatar_url || undefined} />
-                        <AvatarFallback className="bg-secondary/20">
-                          <User className="w-6 h-6 text-secondary" />
-                        </AvatarFallback>
-                      </Avatar>
-                    </button>
-                    <div className="flex-1 min-w-0">
-                      <button 
-                        onClick={() => navigate(`/${request.requester?.username}`)}
-                        className="text-left"
-                      >
-                        <p className="font-bold truncate">{request.requester?.display_name}</p>
-                        <p className="text-sm text-muted-foreground truncate">{request.requester?.username}</p>
+                {pendingRequests.map((request) => {
+                  const isProcessing = processingRequest === request.id;
+                  
+                  return (
+                    <div
+                      key={request.id}
+                      className="flex items-center gap-3 p-4 bg-card rounded-2xl border border-border"
+                    >
+                      <button onClick={() => navigate(`/${request.requester?.username}`)}>
+                        <Avatar className="w-12 h-12">
+                          <AvatarImage src={request.requester?.avatar_url || undefined} />
+                          <AvatarFallback className="bg-secondary/20">
+                            <User className="w-6 h-6 text-secondary" />
+                          </AvatarFallback>
+                        </Avatar>
                       </button>
+                      <div className="flex-1 min-w-0">
+                        <button 
+                          onClick={() => navigate(`/${request.requester?.username}`)}
+                          className="text-left"
+                        >
+                          <p className="font-bold truncate">
+                            {request.requester?.display_name || request.requester?.username}
+                          </p>
+                          <p className="text-sm text-muted-foreground truncate">
+                            {request.requester?.username}
+                          </p>
+                        </button>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          variant="suise"
+                          onClick={() => handleAcceptRequest(request.id)}
+                          disabled={isProcessing}
+                        >
+                          <Check className="w-4 h-4 mr-1" />
+                          {isProcessing ? "..." : "Accept"}
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleRejectRequest(request.id)}
+                          disabled={isProcessing}
+                        >
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </div>
                     </div>
-                    <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        variant="suise"
-                        onClick={() => acceptRequest(request.id)}
-                      >
-                        <Check className="w-4 h-4 mr-1" />
-                        Accept
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => rejectRequest(request.id)}
-                      >
-                        <X className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </TabsContent>
@@ -280,7 +328,10 @@ export default function Connect() {
                 <Users className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
                 <h3 className="text-lg font-bold mb-2">No connections yet</h3>
                 <p className="text-muted-foreground mb-4">Explore and connect with others!</p>
-                <Button variant="suise" onClick={() => navigate("/connect")}>
+                <Button variant="suise" onClick={() => {
+                  const tabsTrigger = document.querySelector('[value="discover"]') as HTMLElement;
+                  tabsTrigger?.click();
+                }}>
                   <Search className="w-4 h-4 mr-2" />
                   Discover People
                 </Button>
@@ -314,7 +365,7 @@ export default function Connect() {
                         onClick={() => navigate(`/${friend?.username}`)}
                         className="flex-1 text-left min-w-0"
                       >
-                        <p className="font-bold truncate">{friend?.display_name}</p>
+                        <p className="font-bold truncate">{friend?.display_name || friend?.username}</p>
                         <p className="text-sm text-muted-foreground truncate">{friend?.username}</p>
                       </button>
                       <Button
