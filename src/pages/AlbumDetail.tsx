@@ -25,7 +25,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { CollaboratorsManager } from "@/components/CollaboratorsManager";
-import { ArrowLeft, Heart, Eye, Share2, MoreHorizontal, Trash2, Edit, Users, UserPlus, Send, Wallet, Copy, Plus, Upload, X, ImagePlus, Bookmark, BookmarkCheck, Crop } from "lucide-react";
+import { ArrowLeft, Heart, Eye, Share2, MoreHorizontal, Trash2, Edit, Users, UserPlus, Send, Wallet, Copy, Plus, X, ImagePlus, Bookmark, BookmarkCheck } from "lucide-react";
 import { toast } from "sonner";
 import { SortableMemoryGrid } from "@/components/SortableMemoryGrid";
 import { ImageCropper } from "@/components/ImageCropper";
@@ -79,6 +79,8 @@ export default function AlbumDetail() {
   const [transferUsername, setTransferUsername] = useState("");
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [selectedMemory, setSelectedMemory] = useState<Memory | null>(null);
+  const [userHasLoved, setUserHasLoved] = useState(false);
+  const [isLovingAlbum, setIsLovingAlbum] = useState(false);
   
   // Upload state
   const [uploadFile, setUploadFile] = useState<File | null>(null);
@@ -96,7 +98,7 @@ export default function AlbumDetail() {
   const [editMemoryCaption, setEditMemoryCaption] = useState("");
 
   const isOwner = user && album && user.id === album.owner_id;
-  const isCoOwner = user && album && user.id !== album.owner_id; // Simplified check
+  const canManagePhotos = isOwner;
 
   useEffect(() => {
     const fetchAlbum = async () => {
@@ -113,6 +115,14 @@ export default function AlbumDetail() {
 
       if (error) {
         console.error(error);
+        toast.error("Album not found");
+        navigate("/explore");
+        return;
+      }
+
+      // Check if user is authenticated and if album is not public and user is not owner
+      if (!data.is_public && (!user || user.id !== data.owner_id)) {
+        toast.error("This album is private");
         navigate("/explore");
         return;
       }
@@ -128,10 +138,22 @@ export default function AlbumDetail() {
         .from("albums")
         .update({ view_count: (data.view_count || 0) + 1 })
         .eq("id", albumId);
+
+      // Check if user has loved this album
+      if (user) {
+        const { data: loveData } = await supabase
+          .from("album_loves")
+          .select("id")
+          .eq("album_id", albumId)
+          .eq("user_id", user.id)
+          .single();
+        
+        setUserHasLoved(!!loveData);
+      }
     };
 
     fetchAlbum();
-  }, [albumId]);
+  }, [albumId, user]);
 
   const handleDelete = async () => {
     if (!albumId) return;
@@ -168,18 +190,88 @@ export default function AlbumDetail() {
   };
 
   const handleLove = async () => {
+    if (!user) {
+      toast.error("Please sign in to love albums");
+      return;
+    }
+
     if (!albumId) return;
-    await loveAlbum(albumId);
-    setAlbum((prev) => prev ? { ...prev, love_count: (prev.love_count || 0) + 1 } : null);
+    
+    setIsLovingAlbum(true);
+
+    try {
+      if (userHasLoved) {
+        // Unlike
+        const { error } = await supabase
+          .from("album_loves")
+          .delete()
+          .eq("album_id", albumId)
+          .eq("user_id", user.id);
+
+        if (!error) {
+          setUserHasLoved(false);
+          setAlbum((prev) => prev ? { ...prev, love_count: Math.max((prev.love_count || 0) - 1, 0) } : null);
+          toast.success("Removed from loved albums");
+        }
+      } else {
+        // Love
+        await loveAlbum(albumId);
+        setUserHasLoved(true);
+        setAlbum((prev) => prev ? { ...prev, love_count: (prev.love_count || 0) + 1 } : null);
+        toast.success("Added to loved albums!");
+      }
+    } catch (error) {
+      console.error("Love action failed:", error);
+    } finally {
+      setIsLovingAlbum(false);
+    }
   };
 
   const handleFollow = async () => {
+    if (!user) {
+      toast.error("Please sign in to follow albums");
+      return;
+    }
+
     if (!albumId) return;
+    
     if (isFollowing(albumId)) {
       await unfollowAlbum(albumId);
+      toast.success("Unfollowed album");
     } else {
       await followAlbum(albumId);
+      toast.success("Following album");
     }
+  };
+
+  const handleShare = async () => {
+    if (!album) return;
+    
+    const shareUrl = `${window.location.origin}/album/${albumId}`;
+    
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: album.title,
+          text: album.description || `Check out ${album.title}`,
+          url: shareUrl,
+        });
+      } catch (err) {
+        // User cancelled share
+      }
+    } else {
+      // Fallback: copy to clipboard
+      await navigator.clipboard.writeText(shareUrl);
+      toast.success("Link copied to clipboard!");
+    }
+
+    // Increment share count
+    await supabase
+      .from("albums")
+      .update({ share_count: (album.share_count || 0) + 1 })
+      .eq("id", albumId);
+    
+    setAlbum((prev) => prev ? { ...prev, share_count: (prev.share_count || 0) + 1 } : null);
   };
 
   const copyWalletAddress = () => {
@@ -189,7 +281,6 @@ export default function AlbumDetail() {
     }
   };
 
-  // Photo upload handlers
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -204,48 +295,30 @@ export default function AlbumDetail() {
       return;
     }
 
-    // Open cropper
-    setFileToCrop(file);
+    setUploadFile(file);
     const reader = new FileReader();
     reader.onload = (e) => {
-      setImageToCrop(e.target?.result as string);
-      setCropperOpen(true);
+      setUploadPreview(e.target?.result as string);
+      setUploadDialogOpen(true);
     };
     reader.readAsDataURL(file);
   };
 
-  const handleCropComplete = async (croppedBlob: Blob) => {
-    setCropperOpen(false);
-    setImageToCrop(null);
-    
-    // Create file from blob
-    const croppedFile = new File([croppedBlob], fileToCrop?.name || "image.jpg", { type: "image/jpeg" });
-    setUploadFile(croppedFile);
-    
-    // Create preview
-    const reader = new FileReader();
-    reader.onload = (e) => setUploadPreview(e.target?.result as string);
-    reader.readAsDataURL(croppedBlob);
-    setUploadDialogOpen(true);
-    setFileToCrop(null);
-  };
-
-  const handleCropCancel = () => {
-    setCropperOpen(false);
-    setImageToCrop(null);
-    setFileToCrop(null);
-    if (fileInputRef.current) fileInputRef.current.value = "";
-  };
-
   const handleUploadMemory = async () => {
-    if (!uploadFile || !albumId) return;
+    if (!uploadFile || !albumId) {
+      toast.error("No file selected");
+      return;
+    }
+    
     setUploading(true);
 
     try {
       await uploadMemory(albumId, uploadFile, uploadCaption, uploadIsPublic);
       setUploadDialogOpen(false);
       resetUploadState();
+      toast.success("Photo uploaded successfully!");
     } catch (error: any) {
+      console.error("Upload error:", error);
       toast.error("Failed to upload", { description: error.message });
     } finally {
       setUploading(false);
@@ -327,8 +400,6 @@ export default function AlbumDetail() {
     );
   }
 
-  const canManagePhotos = isOwner || user;
-
   return (
     <DashboardLayout activeTab="explore" onTabChange={(tab) => navigate(`/${tab === "home" ? "" : tab}`)}>
       <div className="max-w-4xl mx-auto px-4 py-6">
@@ -347,7 +418,8 @@ export default function AlbumDetail() {
           </div>
 
           <div className="flex items-center gap-2">
-            {!isOwner && albumId && (
+            {/* Follow Button - Only for non-owners */}
+            {!isOwner && user && albumId && (
               <Button 
                 variant={isFollowing(albumId) ? "secondary" : "ghost"} 
                 size="icon" 
@@ -361,13 +433,24 @@ export default function AlbumDetail() {
                 )}
               </Button>
             )}
-            <Button variant="ghost" size="icon" onClick={handleLove}>
-              <Heart className="w-5 h-5" />
+            
+            {/* Love Button - For everyone */}
+            <Button 
+              variant={userHasLoved ? "secondary" : "ghost"} 
+              size="icon" 
+              onClick={handleLove}
+              disabled={isLovingAlbum}
+              title={userHasLoved ? "Unlike" : "Love this album"}
+            >
+              <Heart className={`w-5 h-5 ${userHasLoved ? 'fill-current' : ''}`} />
             </Button>
-            <Button variant="ghost" size="icon">
+            
+            {/* Share Button - For everyone */}
+            <Button variant="ghost" size="icon" onClick={handleShare} title="Share album">
               <Share2 className="w-5 h-5" />
             </Button>
 
+            {/* Owner Menu */}
             {isOwner && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -411,7 +494,7 @@ export default function AlbumDetail() {
           </span>
         </div>
 
-        {/* Add Photo Button */}
+        {/* Add Photo Button - Only for owners */}
         {canManagePhotos && (
           <div className="mb-6">
             <input
@@ -495,7 +578,7 @@ export default function AlbumDetail() {
                 </button>
               )}
             </div>
-            {!isOwner && (
+            {!isOwner && user && (
               <Button variant="outline" onClick={() => navigate(`/chat/${album.owner.id}`)}>
                 <Send className="w-4 h-4 mr-2" />
                 Contact
@@ -525,7 +608,7 @@ export default function AlbumDetail() {
                 />
                 <button
                   onClick={resetUploadState}
-                  className="absolute top-2 right-2 p-1 bg-background/80 rounded-full"
+                  className="absolute top-2 right-2 p-1 bg-background/80 rounded-full hover:bg-background"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -670,17 +753,6 @@ export default function AlbumDetail() {
             className="max-w-full max-h-full object-contain rounded-2xl"
           />
         </div>
-      )}
-
-      {/* Image Cropper */}
-      {imageToCrop && (
-        <ImageCropper
-          imageSrc={imageToCrop}
-          onCropComplete={handleCropComplete}
-          onCancel={handleCropCancel}
-          aspect={4 / 3}
-          isOpen={cropperOpen}
-        />
       )}
     </DashboardLayout>
   );
