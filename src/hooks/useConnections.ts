@@ -20,6 +20,10 @@ export interface Connection {
   };
 }
 
+// CHANGE THIS TO MATCH YOUR TABLE NAME
+// If your table is called "connection_requests", change all instances below
+const TABLE_NAME = "connection_requests"; // or "connections"
+
 export function useConnections(userId?: string) {
   const [connections, setConnections] = useState<Connection[]>([]);
   const [pendingRequests, setPendingRequests] = useState<Connection[]>([]);
@@ -30,11 +34,11 @@ export function useConnections(userId?: string) {
     if (!userId) return;
     
     const { data, error } = await supabase
-      .from("connections")
+      .from(TABLE_NAME)
       .select(`
         *,
-        requester:profiles!connections_requester_id_fkey(username, display_name, avatar_url),
-        addressee:profiles!connections_addressee_id_fkey(username, display_name, avatar_url)
+        requester:profiles!${TABLE_NAME}_requester_id_fkey(username, display_name, avatar_url),
+        addressee:profiles!${TABLE_NAME}_addressee_id_fkey(username, display_name, avatar_url)
       `)
       .or(`requester_id.eq.${userId},addressee_id.eq.${userId}`)
       .eq("status", "accepted");
@@ -49,7 +53,7 @@ export function useConnections(userId?: string) {
     if (!userId) return;
     
     const { data, error } = await supabase
-      .from("connections")
+      .from(TABLE_NAME)
       .select("*")
       .eq("requester_id", userId)
       .eq("status", "pending");
@@ -63,10 +67,10 @@ export function useConnections(userId?: string) {
     if (!userId) return;
     
     const { data, error } = await supabase
-      .from("connections")
+      .from(TABLE_NAME)
       .select(`
         *,
-        requester:profiles!connections_requester_id_fkey(username, display_name, avatar_url)
+        requester:profiles!${TABLE_NAME}_requester_id_fkey(username, display_name, avatar_url)
       `)
       .eq("addressee_id", userId)
       .eq("status", "pending");
@@ -76,7 +80,6 @@ export function useConnections(userId?: string) {
     }
   };
 
-  // FIXED: sendRequest now properly uses userId parameter and correct table name
   const sendRequest = async (addresseeId: string) => {
     if (!userId) {
       toast.error('Not authenticated');
@@ -84,9 +87,8 @@ export function useConnections(userId?: string) {
     }
 
     try {
-      // Insert the connection request
       const { data, error } = await supabase
-        .from('connections')
+        .from(TABLE_NAME)
         .insert({
           requester_id: userId,
           addressee_id: addresseeId,
@@ -96,19 +98,16 @@ export function useConnections(userId?: string) {
         .single();
 
       if (error) {
-        console.error('sendRequest - insert failed', error);
+        console.error('sendRequest failed:', error);
         toast.error("Failed to send connection request");
         return { error };
       }
 
       toast.success("Connection request sent!");
-      
-      // Refresh the sent requests list
       await fetchSentRequests();
-      
       return { data, error: null };
     } catch (error) {
-      console.error('sendRequest - unexpected error', error);
+      console.error('sendRequest exception:', error);
       toast.error("Failed to send connection request");
       return { error };
     }
@@ -116,7 +115,7 @@ export function useConnections(userId?: string) {
 
   const acceptRequest = async (connectionId: string) => {
     const { error } = await supabase
-      .from("connections")
+      .from(TABLE_NAME)
       .update({ status: "accepted" })
       .eq("id", connectionId);
 
@@ -133,7 +132,7 @@ export function useConnections(userId?: string) {
 
   const rejectRequest = async (connectionId: string) => {
     const { error } = await supabase
-      .from("connections")
+      .from(TABLE_NAME)
       .update({ status: "rejected" })
       .eq("id", connectionId);
 
