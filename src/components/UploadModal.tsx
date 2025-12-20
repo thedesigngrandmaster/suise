@@ -1,285 +1,154 @@
-import { useState, useRef } from "react";
-import { X, Upload, Image, FolderPlus, Camera } from "lucide-react";
-import { Button } from "./ui/button";
-import { Input } from "./ui/input";
-import { Label } from "./ui/label";
-import { Textarea } from "./ui/textarea";
-import { Switch } from "./ui/switch";
-import { useAlbumsContext } from "@/contexts/AlbumsContext";
-import { useMemories } from "@/hooks/useMemories";
+import { useState } from "react";
+import { useAuth } from "@/hooks/useAuth";
+import { useAlbums } from "@/hooks/useAlbums";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 
 interface UploadModalProps {
   isOpen: boolean;
   onClose: () => void;
-  defaultAlbumId?: string;
 }
 
-type Mode = "select" | "upload" | "create-album";
-
-export function UploadModal({ isOpen, onClose, defaultAlbumId }: UploadModalProps) {
-  const { albums, createAlbum } = useAlbumsContext();
-  const { uploadMemory } = useMemories();
-
-  const [mode, setMode] = useState<Mode>("select");
-  const [selectedAlbumId, setSelectedAlbumId] = useState(defaultAlbumId || "");
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [preview, setPreview] = useState<string | null>(null);
-  const [caption, setCaption] = useState("");
+export function UploadModal({ isOpen, onClose }: UploadModalProps) {
+  // CRITICAL FIX: Get user from useAuth
+  const { user } = useAuth();
+  
+  // CRITICAL FIX: Pass user?.id to useAlbums
+  const { createAlbum } = useAlbums(user?.id);
+  
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
   const [isPublic, setIsPublic] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [creating, setCreating] = useState(false);
 
-  // Create album state
-  const [albumTitle, setAlbumTitle] = useState("");
-  const [albumDescription, setAlbumDescription] = useState("");
-  const [albumIsPublic, setAlbumIsPublic] = useState(false);
+  // Debug logs
+  console.log('UploadModal - user:', user);
+  console.log('UploadModal - user?.id:', user?.id);
 
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const cameraInputRef = useRef<HTMLInputElement>(null);
-
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setSelectedFile(file);
-      const reader = new FileReader();
-      reader.onload = () => setPreview(reader.result as string);
-      reader.readAsDataURL(file);
-      setMode("upload");
-    }
-  };
-
-  const handleUpload = async () => {
-    if (!selectedFile || !selectedAlbumId) return;
-
-    setLoading(true);
-    await uploadMemory(selectedAlbumId, selectedFile, caption, isPublic);
-    setLoading(false);
-    handleClose();
-  };
-
-  const handleCreateAlbum = async () => {
-    if (!albumTitle.trim() || !user) return;
-
-    setLoading(true);
-    
-    const { data: album, error} = await supabase
-    .from("albums")
-    .insert({
-      owner_id: user.id,
-      title: albumTitle.trim(),
-      description: albumDescription.trim() || null,
-      is_public: albumIsPublic,
-    })
-    .select()
-    .single(); 
-
-    if (error) {
-      toast.error("Failed to create album", { description: error.message });
-      setLoading(false);
+  const handleCreate = async () => {
+    if (!title.trim()) {
+      toast.error("Please enter a title");
       return;
     }
-    
-    toast.success("Album created!");
-    setSelectedAlbumId(album.id);
-    setMode("select");
-    setAlbumTitle("");
-    setAlbumDescription("");
-    setAlbumIsPublic(false);
-    await fetchUserAlbums();
-    setLoading(false);
+
+    if (!user?.id) {
+      toast.error("Not authenticated");
+      return;
+    }
+
+    setCreating(true);
+
+    try {
+      const result = await createAlbum({
+        title: title.trim(),
+        description: description.trim() || undefined,
+        is_public: isPublic,
+      });
+
+      if (result.error) {
+        console.error('Create album failed:', result.error);
+        toast.error("Failed to create album");
+      } else {
+        console.log('Album created:', result.album);
+        toast.success("Album created!");
+        resetForm();
+        onClose();
+      }
+    } catch (error) {
+      console.error('Exception creating album:', error);
+      toast.error("Failed to create album");
+    } finally {
+      setCreating(false);
+    }
   };
 
+  const resetForm = () => {
+    setTitle("");
+    setDescription("");
+    setIsPublic(false);
+  };
 
   const handleClose = () => {
-    setMode("select");
-    setSelectedFile(null);
-    setPreview(null);
-    setCaption("");
-    setIsPublic(false);
+    resetForm();
     onClose();
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="w-full max-w-lg bg-card rounded-2xl shadow-lg overflow-hidden">
-        <div className="flex items-center justify-between p-4 border-b border-border">
-          <h2 className="font-bold font-bricolage text-lg">
-            {mode === "create-album" ? "Create Album" : "Add Memory"}
-          </h2>
-          <button onClick={handleClose} className="text-muted-foreground hover:text-foreground">
-            <X className="w-5 h-5" />
-          </button>
+    <Dialog open={isOpen} onOpenChange={handleClose}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Create New Album</DialogTitle>
+          <DialogDescription>
+            Create a new album to organize your memories
+          </DialogDescription>
+        </DialogHeader>
+        
+        <div className="space-y-4">
+          <div>
+            <Label htmlFor="title">Album Title *</Label>
+            <Input
+              id="title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Summer Vacation 2024"
+              className="mt-1"
+              disabled={creating}
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="description">Description (optional)</Label>
+            <Textarea
+              id="description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Memories from our summer trip..."
+              className="mt-1"
+              disabled={creating}
+            />
+          </div>
+
+          <div className="flex items-center justify-between">
+            <Label htmlFor="public">Make album public</Label>
+            <Switch
+              id="public"
+              checked={isPublic}
+              onCheckedChange={setIsPublic}
+              disabled={creating}
+            />
+          </div>
+
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={handleClose}
+              className="flex-1"
+              disabled={creating}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="suise"
+              onClick={handleCreate}
+              className="flex-1"
+              disabled={creating || !title.trim()}
+            >
+              {creating ? "Creating..." : "Create Album"}
+            </Button>
+          </div>
         </div>
-
-        <div className="p-4">
-          {mode === "select" && (
-            <div className="space-y-4">
-              {/* Album selector */}
-              <div>
-                <Label>Select Album</Label>
-                <select
-                  value={selectedAlbumId}
-                  onChange={(e) => setSelectedAlbumId(e.target.value)}
-                  className="w-full mt-1 p-3 rounded-xl border border-border bg-background"
-                >
-                  <option value="">Choose an album...</option>
-                  {albums.map((album) => (
-                    <option key={album.id} value={album.id}>
-                      {album.title}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="flex gap-3">
-                <Button
-                  variant="outline"
-                  className="flex-1"
-                  onClick={() => setMode("create-album")}
-                >
-                  <FolderPlus className="w-4 h-4 mr-2" />
-                  New Album
-                </Button>
-              </div>
-
-              <div className="flex gap-3">
-                <Button
-                  variant="outline"
-                  className="flex-1"
-                  onClick={() => cameraInputRef.current?.click()}
-                  disabled={!selectedAlbumId}
-                >
-                  <Camera className="w-4 h-4 mr-2" />
-                  Take Photo
-                </Button>
-                <Button
-                  variant="suise"
-                  className="flex-1"
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={!selectedAlbumId}
-                >
-                  <Image className="w-4 h-4 mr-2" />
-                  Upload
-                </Button>
-              </div>
-
-              {/* Camera input */}
-              <input
-                ref={cameraInputRef}
-                type="file"
-                accept="image/*"
-                capture="environment"
-                onChange={handleFileSelect}
-                className="hidden"
-              />
-              
-              {/* File upload input */}
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                onChange={handleFileSelect}
-                className="hidden"
-              />
-            </div>
-          )}
-
-          {mode === "upload" && preview && (
-            <div className="space-y-4">
-              <img
-                src={preview}
-                alt="Preview"
-                className="w-full aspect-video object-cover rounded-xl"
-              />
-
-              <div>
-                <Label htmlFor="caption">Caption (optional)</Label>
-                <Textarea
-                  id="caption"
-                  value={caption}
-                  onChange={(e) => setCaption(e.target.value)}
-                  placeholder="Write a caption..."
-                  className="mt-1"
-                />
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium">Make Public</p>
-                  <p className="text-sm text-muted-foreground">Anyone can see this memory</p>
-                </div>
-                <Switch checked={isPublic} onCheckedChange={setIsPublic} />
-              </div>
-
-              <div className="flex gap-3">
-                <Button variant="outline" className="flex-1" onClick={() => setMode("select")}>
-                  Back
-                </Button>
-                <Button
-                  variant="suise"
-                  className="flex-1"
-                  onClick={handleUpload}
-                  disabled={loading}
-                >
-                  <Upload className="w-4 h-4 mr-2" />
-                  {loading ? "Uploading..." : "Upload"}
-                </Button>
-              </div>
-            </div>
-          )}
-
-          {mode === "create-album" && (
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="albumTitle">Album Title</Label>
-                <Input
-                  id="albumTitle"
-                  value={albumTitle}
-                  onChange={(e) => setAlbumTitle(e.target.value)}
-                  placeholder="My awesome album"
-                  className="mt-1"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="albumDesc">Description (optional)</Label>
-                <Textarea
-                  id="albumDesc"
-                  value={albumDescription}
-                  onChange={(e) => setAlbumDescription(e.target.value)}
-                  placeholder="What's this album about?"
-                  className="mt-1"
-                />
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium">Public Album</p>
-                  <p className="text-sm text-muted-foreground">Anyone can discover this album</p>
-                </div>
-                <Switch checked={albumIsPublic} onCheckedChange={setAlbumIsPublic} />
-              </div>
-
-              <div className="flex gap-3">
-                <Button variant="outline" className="flex-1" onClick={() => setMode("select")}>
-                  Cancel
-                </Button>
-                <Button
-                  variant="suise"
-                  className="flex-1"
-                  onClick={handleCreateAlbum}
-                  disabled={loading || !albumTitle.trim()}
-                >
-                  {loading ? "Creating..." : "Create Album"}
-                </Button>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }
