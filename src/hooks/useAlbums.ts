@@ -37,33 +37,74 @@ export function useAlbums(userId?: string) {
   const [loading, setLoading] = useState(true);
 
   const fetchUserAlbums = async () => {
-    if (!userId) return;
+    if (!userId) {
+      setLoading(false);
+      return;
+    }
+    
     setLoading(true);
     
-    const { data, error } = await supabase
-      .from("albums")
-      .select(`
-        *,
-        owner:profiles!albums_owner_id_fkey(id, username, display_name, avatar_url, wallet_address),
-        co_owners:album_co_owners(user_id, user:profiles(username, display_name, avatar_url)),
-        memories(image_url, display_order)
-      `)
-      .or(`owner_id.eq.${userId},album_co_owners.user_id.eq.${userId}`)
-      .order("created_at", { ascending: false });
+    try {
+      // FIXED: Fetch albums owned by user
+      const { data: ownedAlbums, error: ownedError } = await supabase
+        .from("albums")
+        .select(`
+          *,
+          owner:profiles!albums_owner_id_fkey(id, username, display_name, avatar_url, wallet_address),
+          memories(image_url, display_order)
+        `)
+        .eq("owner_id", userId)
+        .order("created_at", { ascending: false });
 
-    if (error) {
-      console.error("Error fetching albums:", error);
-    } else {
-      const albumsWithFirstMemory = (data || []).map(album => {
-        const sortedMemories = album.memories?.sort((a: any, b: any) => (a.display_order || 0) - (b.display_order || 0));
+      if (ownedError) {
+        console.error("Error fetching owned albums:", ownedError);
+        setLoading(false);
+        return;
+      }
+
+      // FIXED: Fetch co-owned albums separately
+      const { data: coOwnedAlbums, error: coOwnedError } = await supabase
+        .from("album_co_owners")
+        .select(`
+          album:albums(
+            *,
+            owner:profiles!albums_owner_id_fkey(id, username, display_name, avatar_url, wallet_address),
+            memories(image_url, display_order)
+          )
+        `)
+        .eq("user_id", userId);
+
+      if (coOwnedError) {
+        console.error("Error fetching co-owned albums:", coOwnedError);
+      }
+
+      // Combine both lists
+      const allAlbums = [
+        ...(ownedAlbums || []),
+        ...(coOwnedAlbums?.map(item => item.album).filter(Boolean) || [])
+      ];
+
+      // Get first memory for each album and remove duplicates
+      const uniqueAlbums = Array.from(
+        new Map(allAlbums.map(album => [album.id, album])).values()
+      );
+
+      const albumsWithFirstMemory = uniqueAlbums.map(album => {
+        const sortedMemories = album.memories?.sort((a: any, b: any) => 
+          (a.display_order || 0) - (b.display_order || 0)
+        );
         return {
           ...album,
           first_memory_url: sortedMemories?.[0]?.image_url || null,
           memories: undefined,
         };
       });
+
       setAlbums(albumsWithFirstMemory);
+    } catch (err) {
+      console.error("Exception fetching albums:", err);
     }
+    
     setLoading(false);
   };
 
@@ -148,9 +189,10 @@ export function useAlbums(userId?: string) {
     cover_image_url?: string;
   }) => {
     console.log('createAlbum called with userId:', userId);
+    console.log('createAlbum data:', data);
     
     if (!userId) {
-      console.error('No userId provided');
+      console.error('No userId provided to createAlbum');
       toast.error("Not authenticated");
       return { error: new Error("Not authenticated") };
     }
