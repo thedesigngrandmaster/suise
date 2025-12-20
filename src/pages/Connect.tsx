@@ -77,7 +77,7 @@ export default function Connect() {
   return (
     <DashboardLayout activeTab="connect" onTabChange={(tab) => navigate(`/${tab === "home" ? "" : tab}`)}>
       <div className="max-w-2xl mx-auto px-4 py-6">
-        <h1 className="text-2xl font-bold font-bricolage mb-6">Connect</h1>
+        <h1 className="text-2xl font-bold font-bricolage mb-6 text-secondary">Connect</h1>
 
         <Tabs defaultValue="discover" className="w-full">
           <TabsList className="w-full mb-6">
@@ -144,7 +144,7 @@ export default function Connect() {
                         key={profile.id}
                         className="flex items-center gap-3 p-4 bg-card rounded-2xl border border-border hover:border-secondary/50 transition-colors"
                       >
-                        <button onClick={() => navigate(`/@${profile.username}`)}>
+                      <button onClick={() => navigate(`/${profile.username}`)}>
                           <Avatar className="w-12 h-12">
                             <AvatarImage src={profile.avatar_url || undefined} />
                             <AvatarFallback className="bg-secondary/20">
@@ -154,11 +154,11 @@ export default function Connect() {
                         </button>
                         <div className="flex-1 min-w-0">
                           <button 
-                            onClick={() => navigate(`/@${profile.username}`)}
+                            onClick={() => navigate(`/${profile.username}`)}
                             className="text-left w-full"
                           >
                             <p className="font-bold truncate">{profile.display_name || profile.username}</p>
-                            <p className="text-sm text-muted-foreground truncate">@{profile.username}</p>
+                            <p className="text-sm text-muted-foreground truncate">{profile.username}</p>
                             {profile.bio && (
                               <p className="text-sm text-muted-foreground line-clamp-1 mt-1">{profile.bio}</p>
                             )}
@@ -221,7 +221,7 @@ export default function Connect() {
                     key={request.id}
                     className="flex items-center gap-3 p-4 bg-card rounded-2xl border border-border"
                   >
-                    <button onClick={() => navigate(`/@${request.requester?.username}`)}>
+                    <button onClick={() => navigate(`/${request.requester?.username}`)}>
                       <Avatar className="w-12 h-12">
                         <AvatarImage src={request.requester?.avatar_url || undefined} />
                         <AvatarFallback className="bg-secondary/20">
@@ -231,11 +231,11 @@ export default function Connect() {
                     </button>
                     <div className="flex-1 min-w-0">
                       <button 
-                        onClick={() => navigate(`/@${request.requester?.username}`)}
+                        onClick={() => navigate(`/${request.requester?.username}`)}
                         className="text-left"
                       >
                         <p className="font-bold truncate">{request.requester?.display_name}</p>
-                        <p className="text-sm text-muted-foreground truncate">@{request.requester?.username}</p>
+                        <p className="text-sm text-muted-foreground truncate">{request.requester?.username}</p>
                       </button>
                     </div>
                     <div className="flex gap-2">
@@ -292,13 +292,17 @@ export default function Connect() {
                     connection.requester_id === user?.id
                       ? connection.addressee
                       : connection.requester;
+                  const friendId =
+                    connection.requester_id === user?.id
+                      ? connection.addressee_id
+                      : connection.requester_id;
 
                   return (
                     <div
                       key={connection.id}
                       className="flex items-center gap-3 p-4 bg-card rounded-2xl border border-border hover:border-secondary/50 transition-colors"
                     >
-                      <button onClick={() => navigate(`/@${friend?.username}`)}>
+                      <button onClick={() => navigate(`/${friend?.username}`)}>
                         <Avatar className="w-12 h-12">
                           <AvatarImage src={friend?.avatar_url || undefined} />
                           <AvatarFallback className="bg-secondary/20">
@@ -307,18 +311,18 @@ export default function Connect() {
                         </Avatar>
                       </button>
                       <button 
-                        onClick={() => navigate(`/@${friend?.username}`)}
+                        onClick={() => navigate(`/${friend?.username}`)}
                         className="flex-1 text-left min-w-0"
                       >
                         <p className="font-bold truncate">{friend?.display_name}</p>
-                        <p className="text-sm text-muted-foreground truncate">@{friend?.username}</p>
+                        <p className="text-sm text-muted-foreground truncate">{friend?.username}</p>
                       </button>
                       <Button
                         size="sm"
                         variant="outline"
                         onClick={(e) => {
                           e.stopPropagation();
-                          navigate(`/chat/${friend?.id}`);
+                          navigate(`/chat/${friendId}`);
                         }}
                       >
                         <MessageCircle className="w-4 h-4" />

@@ -94,7 +94,7 @@ export function AlbumsProvider({ children }: { children: ReactNode }) {
         return {
           ...album,
           first_memory_url: sortedMemories?.[0]?.image_url || album.cover_image_url || null,
-          follower_count: album.album_follows?.length || album.follower_count || 0,
+          follower_count: album.album_follows?.length || album.follow_count || 0,
           memories: undefined,
           album_follows: undefined,
         };
@@ -130,7 +130,7 @@ export function AlbumsProvider({ children }: { children: ReactNode }) {
         return {
           ...album,
           first_memory_url: sortedMemories?.[0]?.image_url || album.cover_image_url || null,
-          follower_count: album.album_follows?.length || album.follower_count || 0,
+          follower_count: album.album_follows?.length || album.follow_count || 0,
           memories: undefined,
           album_follows: undefined,
         };

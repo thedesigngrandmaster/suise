@@ -7,6 +7,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 
 import { AuthProvider } from "@/hooks/useAuth";
 import { AlbumsProvider } from "@/contexts/AlbumsContext";
+import { ThemeProvider } from "@/providers/ThemeProvider";
 
 import { ConnectionProvider, WalletProvider } from "@solana/wallet-adapter-react";
 import { WalletModalProvider } from "@solana/wallet-adapter-react-ui";
@@ -19,23 +20,25 @@ const SOLANA_RPC = "https://api.mainnet-beta.solana.com";
 export function GlobalProviders({ children }: { children: React.ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <AlbumsProvider>
-          <ConnectionProvider endpoint={SOLANA_RPC}>
-            <WalletProvider wallets={wallets} autoConnect>
-              <WalletModalProvider>
-                <TooltipProvider>
-                  <Toaster />
-                  <Sonner />
-                  <BrowserRouter>
-                    {children}
-                  </BrowserRouter>
-                </TooltipProvider>
-              </WalletModalProvider>
-            </WalletProvider>
-          </ConnectionProvider>
-        </AlbumsProvider>
-      </AuthProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <AlbumsProvider>
+            <ConnectionProvider endpoint={SOLANA_RPC}>
+              <WalletProvider wallets={wallets} autoConnect>
+                <WalletModalProvider>
+                  <TooltipProvider>
+                    <Toaster />
+                    <Sonner />
+                    <BrowserRouter>
+                      {children}
+                    </BrowserRouter>
+                  </TooltipProvider>
+                </WalletModalProvider>
+              </WalletProvider>
+            </ConnectionProvider>
+          </AlbumsProvider>
+        </AuthProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }
