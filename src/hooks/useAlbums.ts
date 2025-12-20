@@ -36,58 +36,6 @@ export function useAlbums(userId?: string) {
   const [albums, setAlbums] = useState<Album[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // ADD THIS DEBUG LOG
-  console.log('useAlbums - userId:', userId);
-
-  const createAlbum = async (data: {
-    title: string;
-    description?: string;
-    is_public?: boolean;
-    cover_image_url?: string;
-  }) => {
-    // ADD THESE DEBUG LOGS
-    console.log('createAlbum called');
-    console.log('userId in createAlbum:', userId);
-    console.log('data:', data);
-
-    if (!userId) {
-      console.error('No userId - user not authenticated');
-      toast.error("Not authenticated");
-      return { error: new Error("Not authenticated") };
-    }
-
-    try {
-      const { data: album, error } = await supabase
-        .from("albums")
-        .insert({
-          owner_id: userId, // Make sure this is userId, not 'user'
-          title: data.title,
-          description: data.description,
-          is_public: data.is_public ?? false,
-          cover_image_url: data.cover_image_url,
-        })
-        .select()
-        .single();
-
-      if (error) {
-        console.error('createAlbum error:', error);
-        toast.error("Failed to create album", { description: error.message });
-        return { error };
-      }
-      
-      console.log('Album created successfully:', album);
-      toast.success("Album created!");
-      
-      await fetchUserAlbums();
-      
-      return { album, error: null };
-    } catch (err) {
-      console.error('createAlbum exception:', err);
-      toast.error("Failed to create album");
-      return { error: err };
-    }
-  };
-
   const fetchUserAlbums = async () => {
     if (!userId) return;
     setLoading(true);
@@ -106,13 +54,12 @@ export function useAlbums(userId?: string) {
     if (error) {
       console.error("Error fetching albums:", error);
     } else {
-      // Get first memory for each album
       const albumsWithFirstMemory = (data || []).map(album => {
         const sortedMemories = album.memories?.sort((a: any, b: any) => (a.display_order || 0) - (b.display_order || 0));
         return {
           ...album,
           first_memory_url: sortedMemories?.[0]?.image_url || null,
-          memories: undefined, // Remove memories from album object
+          memories: undefined,
         };
       });
       setAlbums(albumsWithFirstMemory);
@@ -120,11 +67,9 @@ export function useAlbums(userId?: string) {
     setLoading(false);
   };
 
-  // Real-time subscription for album changes
   useEffect(() => {
     if (!userId) return;
 
-    // Subscribe to albums table changes
     const albumsChannel = supabase
       .channel(`user-albums-${userId}`)
       .on(
@@ -142,7 +87,6 @@ export function useAlbums(userId?: string) {
       )
       .subscribe();
 
-    // Also subscribe to album_co_owners table for co-owned albums
     const coOwnersChannel = supabase
       .channel(`user-co-owned-albums-${userId}`)
       .on(
@@ -184,7 +128,6 @@ export function useAlbums(userId?: string) {
     if (error) {
       console.error("Error fetching public albums:", error);
     } else {
-      // Get first memory for each album
       const albumsWithFirstMemory = (data || []).map(album => {
         const sortedMemories = album.memories?.sort((a: any, b: any) => (a.display_order || 0) - (b.display_order || 0));
         return {
@@ -204,31 +147,44 @@ export function useAlbums(userId?: string) {
     is_public?: boolean;
     cover_image_url?: string;
   }) => {
-    if (!userId) return { error: new Error("Not authenticated") };
-
-    const { data: album, error } = await supabase
-      .from("albums")
-      .insert({
-        owner_id: userId,
-        title: data.title,
-        description: data.description,
-        is_public: data.is_public ?? false,
-        cover_image_url: data.cover_image_url,
-      })
-      .select()
-      .single();
-
-    if (error) {
-      toast.error("Failed to create album", { description: error.message });
-      return { error };
+    console.log('createAlbum called with userId:', userId);
+    
+    if (!userId) {
+      console.error('No userId provided');
+      toast.error("Not authenticated");
+      return { error: new Error("Not authenticated") };
     }
-    
-    toast.success("Album created!");
-    
-    // Immediately refetch to update the UI
-    await fetchUserAlbums();
-    
-    return { album, error: null };
+
+    try {
+      const { data: album, error } = await supabase
+        .from("albums")
+        .insert({
+          owner_id: userId,
+          title: data.title,
+          description: data.description,
+          is_public: data.is_public ?? false,
+          cover_image_url: data.cover_image_url,
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Create album error:', error);
+        toast.error("Failed to create album", { description: error.message });
+        return { error };
+      }
+      
+      console.log('Album created successfully:', album);
+      toast.success("Album created!");
+      
+      await fetchUserAlbums();
+      
+      return { album, error: null };
+    } catch (err) {
+      console.error('Create album exception:', err);
+      toast.error("Failed to create album");
+      return { error: err };
+    }
   };
 
   const updateAlbum = async (albumId: string, data: {
@@ -305,7 +261,7 @@ export function useAlbums(userId?: string) {
       .from("album_loves")
       .insert({ album_id: albumId, user_id: userId });
 
-    if (error && error.code !== "23505") { // Ignore duplicate key error
+    if (error && error.code !== "23505") {
       toast.error("Failed to love album");
       return { error };
     }
