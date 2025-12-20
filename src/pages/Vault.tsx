@@ -12,6 +12,12 @@ export default function Vault() {
   const [uploadOpen, setUploadOpen] = useState(false);
   const navigate = useNavigate();
 
+  // FIXED: Added console log to debug
+  const handleNewAlbum = () => {
+    console.log("Opening upload modal");
+    setUploadOpen(true);
+  };
+
   return (
     <DashboardLayout activeTab="vault" onTabChange={(tab) => navigate(`/${tab === "home" ? "" : tab}`)}>
       <div className="max-w-4xl mx-auto px-4 py-6">
@@ -20,7 +26,8 @@ export default function Vault() {
             <h1 className="text-2xl font-bold font-bricolage">Your Vault</h1>
             <p className="text-muted-foreground">Your private memories organized by albums</p>
           </div>
-          <Button variant="suise" onClick={() => setUploadOpen(true)}>
+          {/* FIXED: Using handler function */}
+          <Button variant="suise" onClick={handleNewAlbum}>
             <Plus className="w-4 h-4 mr-2" />
             New Album
           </Button>
@@ -39,7 +46,7 @@ export default function Vault() {
             </div>
             <h3 className="text-lg font-bold mb-2">No albums yet</h3>
             <p className="text-muted-foreground mb-4">Create your first album to start saving memories</p>
-            <Button variant="suise" onClick={() => setUploadOpen(true)}>
+            <Button variant="suise" onClick={handleNewAlbum}>
               Create Album
             </Button>
           </div>
@@ -57,7 +64,15 @@ export default function Vault() {
         )}
       </div>
 
-      <UploadModal isOpen={uploadOpen} onClose={() => setUploadOpen(false)} />
+      {/* FIXED: Added key prop to force re-render when state changes */}
+      <UploadModal 
+        key={uploadOpen ? 'open' : 'closed'}
+        isOpen={uploadOpen} 
+        onClose={() => {
+          console.log("Closing upload modal");
+          setUploadOpen(false);
+        }} 
+      />
     </DashboardLayout>
   );
 }
