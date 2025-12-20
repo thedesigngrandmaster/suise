@@ -7,6 +7,8 @@ import { Textarea } from "./ui/textarea";
 import { Switch } from "./ui/switch";
 import { useAlbumsContext } from "@/contexts/AlbumsContext";
 import { useMemories } from "@/hooks/useMemories";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 interface UploadModalProps {
   isOpen: boolean;
@@ -57,32 +59,37 @@ export function UploadModal({ isOpen, onClose, defaultAlbumId }: UploadModalProp
   };
 
   const handleCreateAlbum = async () => {
-    if (!albumTitle.trim()) return;
+    if (!albumTitle.trim() || !user) return;
 
     setLoading(true);
     
-    const result = await createAlbum({
-      title: albumTitle,
-      description: albumDescription || undefined,
+    const { data: album, error} = await supabase
+    .from("albums")
+    .insert({
+      owner_id: user.id,
+      title: albumTitle.trim(),
+      description: albumDescription.trim() || null,
       is_public: albumIsPublic,
-    });
+    })
+    .select()
+    .single(); 
 
-    setLoading(false);
-
-    if (result?.error) {
+    if (error) {
+      toast.error("Failed to create album", { description: error.message });
+      setLoading(false);
       return;
     }
-
-    // Set the newly created album as selected
-    if (result?.album) {
-      setSelectedAlbumId(result.album.id);
-    }
     
+    toast.success("Album created!");
+    setSelectedAlbumId(album.id);
     setMode("select");
     setAlbumTitle("");
     setAlbumDescription("");
     setAlbumIsPublic(false);
+    await fetchUserAlbums();
+    setLoading(false);
   };
+
 
   const handleClose = () => {
     setMode("select");
@@ -90,7 +97,6 @@ export function UploadModal({ isOpen, onClose, defaultAlbumId }: UploadModalProp
     setPreview(null);
     setCaption("");
     setIsPublic(false);
-    setSelectedAlbumId(defaultAlbumId || "");
     onClose();
   };
 

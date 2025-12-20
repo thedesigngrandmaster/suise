@@ -9,6 +9,17 @@ import { Send, ArrowLeft, User } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 
+// Format message time with actual timestamps
+const formatMessageTime = (date: Date): string => {
+  if (isToday(date)) {
+    return format(date, "h:mm a");
+  } else if (isYesterday(date)) {
+    return `Yesterday, ${format(date, "h:mm a")}`;
+  } else {
+    return format(date, "MMM d, h:mm a");
+  }
+};
+
 export default function Chat() {
   const { partnerId } = useParams<{ partnerId: string }>();
   const { user } = useAuth();

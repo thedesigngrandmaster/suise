@@ -2,10 +2,8 @@ import { createContext, useContext, useEffect, useState, ReactNode } from "react
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { useWallet as useSuiWallet } from "@suiet/wallet-kit";
-import { useWallet as usePhantomWallet } from "@solana/wallet-adapter-react";
 
-interface Profile {
+export interface Profile {
   id: string;
   username: string | null;
   display_name: string | null;
@@ -21,16 +19,16 @@ interface Profile {
   show_wallet: boolean;
 }
 
-interface AuthContextType {
+export interface AuthContextType {
   user: User | null;
   session: Session | null;
   profile: Profile | null;
   loading: boolean;
   signInWithGoogle: () => Promise<void>;
-  signInWithSlush: () => Promise<void>;
-  signInWithPhantom: () => Promise<void>;
   signInWithEmail: (email: string, password: string) => Promise<{ error: Error | null }>;
   signUpWithEmail: (email: string, password: string, displayName?: string) => Promise<{ error: Error | null }>;
+  signInWithSlush: () => Promise<void>;
+  signInWithPhantom: () => Promise<void>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
 }
@@ -43,44 +41,52 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const suiWallet = useSuiWallet();
-  const phantomWallet = usePhantomWallet();
-
   const fetchProfile = async (userId: string) => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("profiles")
       .select("*")
       .eq("id", userId)
       .maybeSingle();
 
+    if (error) {
+      console.error("Error fetching profile:", error);
+      return null;
+    }
     return data;
   };
 
   const refreshProfile = async () => {
-    if (!user) return;
-    const profileData = await fetchProfile(user.id);
-    setProfile(profileData);
+    if (user) {
+      const profileData = await fetchProfile(user.id);
+      setProfile(profileData);
+    }
   };
 
   useEffect(() => {
+    // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_, newSession) => {
+      (event, newSession) => {
         setSession(newSession);
         setUser(newSession?.user ?? null);
 
         if (newSession?.user) {
-          fetchProfile(newSession.user.id).then(setProfile);
+          // Defer profile fetch to avoid deadlock
+          setTimeout(() => {
+            fetchProfile(newSession.user.id).then(setProfile);
+          }, 0);
         } else {
           setProfile(null);
         }
       }
     );
 
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session);
-      setUser(data.session?.user ?? null);
-      if (data.session?.user) {
-        fetchProfile(data.session.user.id).then(setProfile);
+    // Check for existing session
+    supabase.auth.getSession().then(({ data: { session: existingSession } }) => {
+      setSession(existingSession);
+      setUser(existingSession?.user ?? null);
+      
+      if (existingSession?.user) {
+        fetchProfile(existingSession.user.id).then(setProfile);
       }
       setLoading(false);
     });
@@ -91,79 +97,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signInWithGoogle = async () => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: window.location.origin },
+      options: {
+        redirectTo: `${window.location.origin}/`,
+      },
     });
-
     if (error) {
-      toast.error("Google sign-in failed", { description: error.message });
+      toast.error("Failed to sign in with Google", { description: error.message });
       throw error;
     }
-  };
-
-  const signInWithSlush = async () => {
-    await suiWallet.connect();
-
-    const res = await fetch(
-      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/auth-slush`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-        },
-        body: JSON.stringify({
-          address: suiWallet.address,
-          message: "Sign in to Suise",
-        }),
-      }
-    );
-
-    if (!res.ok) {
-      const err = await res.text();
-      toast.error("Slush login failed", { description: err });
-      throw new Error(err);
-    }
-
-    const session = await res.json();
-    await supabase.auth.setSession(session);
-  };
-
-  const signInWithPhantom = async () => {
-    if (!phantomWallet.connected) {
-      await phantomWallet.connect();
-    }
-
-    const res = await fetch(
-      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/auth-phantom`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-        },
-        body: JSON.stringify({
-          publicKey: phantomWallet.publicKey?.toBase58(),
-          message: "Sign in to Suise",
-        }),
-      }
-    );
-
-    if (!res.ok) {
-      const err = await res.text();
-      toast.error("Phantom login failed", { description: err });
-      throw new Error(err);
-    }
-
-    const session = await res.json();
-    await supabase.auth.setSession(session);
   };
 
   const signInWithEmail = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
-      toast.error("Sign-in failed", { description: error.message });
+      toast.error("Failed to sign in", { description: error.message });
       return { error };
     }
+    toast.success("Welcome back!", { description: "Successfully signed in" });
     return { error: null };
   };
 
@@ -172,20 +122,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       email,
       password,
       options: {
-        data: { full_name: displayName },
+        emailRedirectTo: `${window.location.origin}/`,
+        data: {
+          full_name: displayName || email.split("@")[0],
+        },
       },
     });
-
     if (error) {
-      toast.error("Sign-up failed", { description: error.message });
+      toast.error("Failed to sign up", { description: error.message });
       return { error };
     }
+    toast.success("Welcome to Suise!", { description: "Account created successfully" });
     return { error: null };
   };
 
+  const signInWithSlush = async () => {
+    toast.info("Slush wallet", { description: "Wallet authentication coming soon!" });
+  };
+
+  const signInWithPhantom = async () => {
+    toast.info("Phantom wallet", { description: "Wallet authentication coming soon!" });
+  };
+
   const signOut = async () => {
-    await supabase.auth.signOut();
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      toast.error("Failed to sign out", { description: error.message });
+      throw error;
+    }
     setProfile(null);
+    toast.success("Signed out successfully");
   };
 
   return (
@@ -196,10 +162,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         profile,
         loading,
         signInWithGoogle,
-        signInWithSlush,
-        signInWithPhantom,
         signInWithEmail,
         signUpWithEmail,
+        signInWithSlush,
+        signInWithPhantom,
         signOut,
         refreshProfile,
       }}

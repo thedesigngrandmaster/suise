@@ -76,26 +76,68 @@ export function useConnections(userId?: string) {
     }
   };
 
-  const sendRequest = async (addresseeId: string) => {
-    if (!userId) return { error: new Error("Not authenticated") };
+// sendRequest: inserts a connection request and optionally fetches the inserted row safely
+async function sendRequest(addresseeId: string) {
+  if (!user?.id) {
+    console.error('sendRequest: not authenticated');
+    throw new Error('Not authenticated');
+  }
 
-    const { error } = await supabase
-      .from("connections")
-      .insert({ requester_id: userId, addressee_id: addresseeId });
+  const payload = {
+    requester_id: user.id,    // MUST equal auth.uid()
+    addressee_id: addresseeId,
+    status: 'pending',
+  };
 
-    if (error) {
-      if (error.code === "23505") {
-        toast.error("Connection request already sent");
-      } else {
-        toast.error("Failed to send request");
-      }
-      return { error };
+  try {
+    // Insert without chaining .select() to avoid SELECT RLS interfering with insert success
+    const { data: insertData, error: insertError } = await supabase
+      .from('connection_requests')
+      .insert([payload]);
+
+    console.log('sendRequest - insert result', { insertData, insertError });
+
+    if (insertError) {
+      // Surface DB error (RLS/constraint)
+      console.error('sendRequest - insert failed', insertError);
+      return { success: false, error: insertError };
     }
 
-    toast.success("Connection request sent!");
-    await fetchSentRequests();
-    return { error: null };
-  };
+    const insertedId = insertData?.[0]?.id ?? null;
+
+    // If you need the inserted row for UI, fetch it in a separate SELECT.
+    // This SELECT is subject to SELECT policies; handle failures gracefully.
+    if (insertedId) {
+      try {
+        const { data: fetched, error: fetchError } = await supabase
+          .from('connection_requests')
+          .select(
+            `id, requester_id, addressee_id, status, created_at,
+             requester:requester(username,display_name,avatar_url),
+             addressee:addressee(username,display_name,avatar_url)`
+          )
+          .eq('id', insertedId)
+          .single();
+
+        if (fetchError) {
+          console.warn('sendRequest - fetch after insert failed (likely SELECT RLS):', fetchError);
+          // Still treat the operation as success if insert succeeded.
+          return { success: true, id: insertedId, fetched: null, warning: fetchError };
+        }
+
+        return { success: true, id: insertedId, fetched };
+      } catch (err) {
+        console.warn('sendRequest - unexpected fetch error', err);
+        return { success: true, id: insertedId, fetched: null, warning: err };
+      }
+    }
+
+    return { success: true, id: null };
+  } catch (error) {
+    console.error('sendRequest - unexpected error', error);
+    return { success: false, error };
+  }
+}
 
   const acceptRequest = async (connectionId: string) => {
     const { error } = await supabase

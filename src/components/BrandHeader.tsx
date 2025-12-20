@@ -9,10 +9,10 @@ export function BrandHeader({ collapsed }: BrandHeaderProps) {
   return (
     <div className="flex items-center gap-2">
       <img 
-  src={collapsed ? mascot : suiseLogo} 
-  alt="Suise" 
-  className={collapsed ? "h-11 w-auto" : "h-16 w-auto object-contain"}
-/>
+        src={collapsed ? mascot : suiseLogo} 
+        alt="Suise" 
+        className={collapsed ? "h-10 w-auto" : "h-12 w-auto object-contain"}
+      />
 
     </div>
   );
