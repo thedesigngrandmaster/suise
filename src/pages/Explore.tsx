@@ -9,6 +9,7 @@ import { TrendingUp, Sparkles, Heart, Search, User } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+
 interface SearchResult {
   type: "user" | "album";
   id: string;
@@ -27,9 +28,19 @@ export default function Explore() {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+
   useEffect(() => {
+    console.log('Explore - Fetching public albums');
     fetchPublicAlbums(100);
   }, []);
+
+  // Debug logs
+  useEffect(() => {
+    console.log('Explore - user:', user);
+    console.log('Explore - albums:', albums);
+    console.log('Explore - loading:', loading);
+    console.log('Explore - activeCategory:', activeCategory);
+  }, [user, albums, loading, activeCategory]);
 
   // Search functionality
   useEffect(() => {
@@ -42,7 +53,6 @@ export default function Explore() {
       setIsSearching(true);
       const results: SearchResult[] = [];
 
-      // Check if it's a username search
       if (searchQuery.startsWith("@")) {
         const username = searchQuery.slice(1).toLowerCase();
         const { data: users } = await supabase
@@ -65,7 +75,6 @@ export default function Explore() {
           });
         }
       } else {
-        // Search users and albums
         const [usersResponse, albumsResponse] = await Promise.all([
           supabase
             .from("profiles")
@@ -122,7 +131,6 @@ export default function Explore() {
     navigate(url);
   };
 
-  // Get albums based on category
   const getDisplayAlbums = () => {
     if (activeCategory === "following") {
       return followedAlbums;
@@ -159,7 +167,6 @@ export default function Explore() {
             className="pl-10 h-12 rounded-full bg-muted border-none"
           />
           
-          {/* Search Results Dropdown */}
           {(searchResults.length > 0 || isSearching) && searchQuery && (
             <div className="absolute top-full left-0 right-0 mt-2 bg-card rounded-2xl shadow-lg border border-border z-50 overflow-hidden max-h-80 overflow-y-auto">
               {isSearching ? (
@@ -236,16 +243,21 @@ export default function Explore() {
             ))}
           </div>
         ) : displayAlbums.length > 0 ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            {displayAlbums.map((album) => (
-              <AlbumCard
-                key={album.id}
-                album={album as Album}
-                onClick={() => navigate(`/album/${album.id}`)}
-                showOwner
-              />
-            ))}
-          </div>
+          <>
+            <p className="text-sm text-muted-foreground mb-4">
+              {displayAlbums.length} {displayAlbums.length === 1 ? 'album' : 'albums'}
+            </p>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              {displayAlbums.map((album) => (
+                <AlbumCard
+                  key={album.id}
+                  album={album as Album}
+                  onClick={() => navigate(`/album/${album.id}`)}
+                  showOwner
+                />
+              ))}
+            </div>
+          </>
         ) : (
           <div className="text-center py-16">
             {activeCategory === "following" ? (
