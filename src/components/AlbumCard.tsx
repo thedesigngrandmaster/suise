@@ -1,4 +1,4 @@
-import { Heart, Eye, Share2, Users, UserPlus, UserMinus } from "lucide-react";
+import { Heart, Eye, Users, UserPlus, UserMinus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
@@ -7,51 +7,76 @@ import { useAlbumFollows } from "@/hooks/useAlbumFollows";
 interface Album {
   id: string;
   title: string;
+  description?: string | null;
   cover_image_url?: string | null;
   first_memory_url?: string | null;
   is_public: boolean;
   view_count: number;
   love_count?: number;
+  follow_count?: number;
   follower_count?: number;
   owner_id: string;
+  owner?: {
+    id: string;
+    username: string | null;
+    display_name: string | null;
+    avatar_url: string | null;
+    wallet_address: string | null;
+  };
 }
 
 interface AlbumCardProps {
   album: Album;
   onClick?: () => void;
   onDelete?: () => void;
+  showOwner?: boolean;
   showFollowButton?: boolean;
 }
 
-export function AlbumCard({ album, onClick, showFollowButton = true }: AlbumCardProps) {
+export function AlbumCard({ 
+  album, 
+  onClick, 
+  onDelete,
+  showOwner = false,
+  showFollowButton = false 
+}: AlbumCardProps) {
   const { user } = useAuth();
-  const { isFollowing, followerCount, loading, followAlbum, unfollowAlbum } = useAlbumFollows(
-    user?.id,
-    album.id
-  );
-
-  const isOwnAlbum = user?.id === album.owner_id;
-  const coverImage = album.cover_image_url || album.first_memory_url;
+  const { isFollowing, followAlbum, unfollowAlbum } = useAlbumFollows(user?.id);
   
-  // Use follower count from album data or from hook
-  const displayFollowerCount = album.follower_count ?? followerCount;
+  const isOwnAlbum = user?.id === album.owner_id;
+  const coverImage = album.first_memory_url || album.cover_image_url;
+  
+  // Use follow_count from album data
+  const displayFollowCount = album.follow_count ?? album.follower_count ?? 0;
 
   const handleFollowClick = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (isFollowing) {
-      await unfollowAlbum();
+    
+    if (!user) {
+      return;
+    }
+
+    if (isFollowing(album.id)) {
+      await unfollowAlbum(album.id);
     } else {
-      await followAlbum();
+      await followAlbum(album.id);
+    }
+  };
+
+  const handleCardClick = () => {
+    if (onClick) {
+      onClick();
     }
   };
 
   return (
     <div
       className={cn(
-        "group relative aspect-square rounded-2xl overflow-hidden bg-muted cursor-pointer",
+        "group relative aspect-square rounded-2xl overflow-hidden bg-muted",
+        onClick && "cursor-pointer",
         "transition-all duration-300 hover:shadow-neubrutalist hover:scale-[1.02]"
       )}
-      onClick={onClick}
+      onClick={handleCardClick}
     >
       {/* Cover Image */}
       {coverImage ? (
@@ -73,6 +98,13 @@ export function AlbumCard({ album, onClick, showFollowButton = true }: AlbumCard
             {album.title}
           </h3>
 
+          {/* Owner Info */}
+          {showOwner && album.owner && (
+            <p className="text-white/70 text-xs mb-2">
+              by {album.owner.display_name || album.owner.username || "Unknown"}
+            </p>
+          )}
+
           {/* Stats Row */}
           <div className="flex items-center gap-4 text-white/80 text-sm mb-3">
             <div className="flex items-center gap-1">
@@ -87,20 +119,19 @@ export function AlbumCard({ album, onClick, showFollowButton = true }: AlbumCard
             )}
             <div className="flex items-center gap-1">
               <Users className="w-4 h-4" />
-              <span>{displayFollowerCount}</span>
+              <span>{displayFollowCount}</span>
             </div>
           </div>
 
           {/* Follow Button */}
           {showFollowButton && !isOwnAlbum && user && (
             <Button
-              variant={isFollowing ? "outline" : "suise"}
+              variant={isFollowing(album.id) ? "outline" : "suise"}
               size="sm"
               className="w-full"
               onClick={handleFollowClick}
-              disabled={loading}
             >
-              {isFollowing ? (
+              {isFollowing(album.id) ? (
                 <>
                   <UserMinus className="w-4 h-4 mr-2" />
                   Following
