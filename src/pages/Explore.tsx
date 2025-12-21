@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
-import { useAlbums, Album } from "@/hooks/useAlbums";
+import { useAlbums } from "@/hooks/useAlbums";
 import { useAlbumFollows } from "@/hooks/useAlbumFollows";
 import { useAuth } from "@/hooks/useAuth";
 import { AlbumCard } from "@/components/AlbumCard";
@@ -21,7 +21,7 @@ interface SearchResult {
 
 export default function Explore() {
   const { user } = useAuth();
-  const { fetchPublicAlbums, albums, loading } = useAlbums();
+  const { fetchPublicAlbums, albums, loading } = useAlbums(user?.id);
   const { followedAlbums, loading: followsLoading } = useAlbumFollows(user?.id);
   const navigate = useNavigate();
   const [activeCategory, setActiveCategory] = useState("trending");
@@ -36,11 +36,9 @@ export default function Explore() {
 
   // Debug logs
   useEffect(() => {
-    console.log('Explore - user:', user);
     console.log('Explore - albums:', albums);
     console.log('Explore - loading:', loading);
-    console.log('Explore - activeCategory:', activeCategory);
-  }, [user, albums, loading, activeCategory]);
+  }, [albums, loading]);
 
   // Search functionality
   useEffect(() => {
@@ -251,9 +249,9 @@ export default function Explore() {
               {displayAlbums.map((album) => (
                 <AlbumCard
                   key={album.id}
-                  album={album as Album}
+                  album={album}
                   onClick={() => navigate(`/album/${album.id}`)}
-                  showOwner
+                  showOwner={true}
                 />
               ))}
             </div>
