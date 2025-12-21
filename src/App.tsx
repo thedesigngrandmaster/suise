@@ -12,6 +12,7 @@ import DemoAlbumDetail from "./pages/DemoAlbumDetail";
 import Auth from "./pages/Auth";
 import Notifications from "./pages/Notifications";
 import NotFound from "./pages/NotFound";
+import TestAlbums from "@/pages/TestAlbums";
 
 const App = () => (
   <Routes>
@@ -30,6 +31,7 @@ const App = () => (
     <Route path="/notifications" element={<Notifications />} />
     <Route path="/:username" element={<Profile />} />
     <Route path="*" element={<NotFound />} />
+    <Route path="/test-albums" element={<TestAlbums />} />
   </Routes>
 );
 
