@@ -252,6 +252,7 @@ export default function Explore() {
                   album={album}
                   onClick={() => navigate(`/album/${album.id}`)}
                   showOwner={true}
+                  showFollowButton={true}
                 />
               ))}
             </div>
