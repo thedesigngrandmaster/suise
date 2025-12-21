@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { useAlbumsContext } from "@/contexts/AlbumsContext";
 import { Plus } from "lucide-react";
@@ -6,13 +6,21 @@ import { Button } from "@/components/ui/button";
 import { UploadModal } from "@/components/UploadModal";
 import { AlbumCard } from "@/components/AlbumCard";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function Vault() {
+  const { user } = useAuth();
   const { albums, loading, deleteAlbum } = useAlbumsContext();
   const [uploadOpen, setUploadOpen] = useState(false);
   const navigate = useNavigate();
 
-  // FIXED: Added console log to debug
+  // Debug logs
+  useEffect(() => {
+    console.log('Vault - user:', user);
+    console.log('Vault - albums:', albums);
+    console.log('Vault - loading:', loading);
+  }, [user, albums, loading]);
+
   const handleNewAlbum = () => {
     console.log("Opening upload modal");
     setUploadOpen(true);
@@ -26,7 +34,6 @@ export default function Vault() {
             <h1 className="text-2xl font-bold font-bricolage">Your Vault</h1>
             <p className="text-muted-foreground">Your private memories organized by albums</p>
           </div>
-          {/* FIXED: Using handler function */}
           <Button variant="suise" onClick={handleNewAlbum}>
             <Plus className="w-4 h-4 mr-2" />
             New Album
@@ -51,20 +58,24 @@ export default function Vault() {
             </Button>
           </div>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            {albums.map((album) => (
-              <AlbumCard
-                key={album.id}
-                album={album}
-                onClick={() => navigate(`/album/${album.id}`)}
-                onDelete={() => deleteAlbum(album.id)}
-              />
-            ))}
-          </div>
+          <>
+            <p className="text-sm text-muted-foreground mb-4">
+              {albums.length} {albums.length === 1 ? 'album' : 'albums'}
+            </p>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              {albums.map((album) => (
+                <AlbumCard
+                  key={album.id}
+                  album={album}
+                  onClick={() => navigate(`/album/${album.id}`)}
+                  onDelete={() => deleteAlbum(album.id)}
+                />
+              ))}
+            </div>
+          </>
         )}
       </div>
 
-      {/* FIXED: Added key prop to force re-render when state changes */}
       <UploadModal 
         key={uploadOpen ? 'open' : 'closed'}
         isOpen={uploadOpen} 
