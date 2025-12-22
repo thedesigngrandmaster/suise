@@ -7,8 +7,10 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { User, Check, X, Users, Search, MessageCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { AvatarClickable } from "@/components/AvatarClickable";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
 
 interface UserProfile {
   id: string;
@@ -36,6 +38,15 @@ export default function Connect() {
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [processingRequest, setProcessingRequest] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState("discover");
+
+  // Auto-switch to requests tab if there are pending requests and it's their first visit
+  useEffect(() => {
+    if (pendingRequests.length > 0 && !sessionStorage.getItem("connect-tab-visited")) {
+      setActiveTab("requests");
+      sessionStorage.setItem("connect-tab-visited", "true");
+    }
+  }, [pendingRequests.length]);
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -91,8 +102,8 @@ export default function Connect() {
     setProcessingRequest(connectionId);
     await acceptRequest(connectionId);
     setProcessingRequest(null);
-    // Refresh to update UI
     await refetch();
+    toast.success("Connection accepted! 🎉");
   };
 
   const handleRejectRequest = async (connectionId: string) => {
@@ -106,7 +117,30 @@ export default function Connect() {
       <div className="max-w-2xl mx-auto px-4 py-6">
         <h1 className="text-2xl font-bold font-bricolage mb-6 text-secondary">Connect</h1>
 
-        <Tabs defaultValue="discover" className="w-full">
+        {/* Pending Requests Alert Banner */}
+        {pendingRequests.length > 0 && activeTab !== "requests" && (
+          <div className="mb-6 p-4 bg-secondary/10 border border-secondary/20 rounded-2xl">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="font-bold text-secondary">
+                  You have {pendingRequests.length} pending connection {pendingRequests.length === 1 ? "request" : "requests"}!
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  People want to connect with you
+                </p>
+              </div>
+              <Button
+                variant="suise"
+                size="sm"
+                onClick={() => setActiveTab("requests")}
+              >
+                View Requests
+              </Button>
+            </div>
+          </div>
+        )}
+
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="w-full mb-6">
             <TabsTrigger value="discover" className="flex-1">
               <Search className="w-4 h-4 mr-2" />
@@ -115,9 +149,9 @@ export default function Connect() {
             <TabsTrigger value="requests" className="flex-1 relative">
               Requests
               {pendingRequests.length > 0 && (
-                <span className="ml-2 bg-secondary text-secondary-foreground text-xs px-2 py-0.5 rounded-full font-bold">
+                <Badge className="ml-2 h-5 min-w-[20px] px-1">
                   {pendingRequests.length}
-                </span>
+                </Badge>
               )}
             </TabsTrigger>
             <TabsTrigger value="connections" className="flex-1">
@@ -174,12 +208,12 @@ export default function Connect() {
                         className="flex items-center gap-3 p-4 bg-card rounded-2xl border border-border hover:border-secondary/50 transition-colors"
                       >
                         <button onClick={() => navigate(`/${profile.username}`)}>
-                          <Avatar className="w-12 h-12">
-                            <AvatarImage src={profile.avatar_url || undefined} />
-                            <AvatarFallback className="bg-secondary/20">
-                              <User className="w-6 h-6 text-secondary" />
-                            </AvatarFallback>
-                          </Avatar>
+                          <AvatarClickable
+                            avatarUrl={profile.avatar_url}
+                            displayName={profile.display_name}
+                            username={profile.username}
+                            size="md"
+                          />
                         </button>
                         <div className="flex-1 min-w-0">
                           <button 
@@ -205,12 +239,8 @@ export default function Connect() {
                         ) : status === "pending" ? (
                           <Button 
                             size="sm" 
-                            variant="outline"
-                            onClick={() => {
-                              // Switch to requests tab when they have a pending request
-                              const tabsTrigger = document.querySelector('[value="requests"]') as HTMLElement;
-                              tabsTrigger?.click();
-                            }}
+                            variant="suise"
+                            onClick={() => setActiveTab("requests")}
                           >
                             Respond
                           </Button>
@@ -263,12 +293,12 @@ export default function Connect() {
                       className="flex items-center gap-3 p-4 bg-card rounded-2xl border border-border"
                     >
                       <button onClick={() => navigate(`/${request.requester?.username}`)}>
-                        <Avatar className="w-12 h-12">
-                          <AvatarImage src={request.requester?.avatar_url || undefined} />
-                          <AvatarFallback className="bg-secondary/20">
-                            <User className="w-6 h-6 text-secondary" />
-                          </AvatarFallback>
-                        </Avatar>
+                        <AvatarClickable
+                          avatarUrl={request.requester?.avatar_url}
+                          displayName={request.requester?.display_name}
+                          username={request.requester?.username}
+                          size="md"
+                        />
                       </button>
                       <div className="flex-1 min-w-0">
                         <button 
@@ -328,10 +358,7 @@ export default function Connect() {
                 <Users className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
                 <h3 className="text-lg font-bold mb-2">No connections yet</h3>
                 <p className="text-muted-foreground mb-4">Explore and connect with others!</p>
-                <Button variant="suise" onClick={() => {
-                  const tabsTrigger = document.querySelector('[value="discover"]') as HTMLElement;
-                  tabsTrigger?.click();
-                }}>
+                <Button variant="suise" onClick={() => setActiveTab("discover")}>
                   <Search className="w-4 h-4 mr-2" />
                   Discover People
                 </Button>
@@ -354,12 +381,12 @@ export default function Connect() {
                       className="flex items-center gap-3 p-4 bg-card rounded-2xl border border-border hover:border-secondary/50 transition-colors"
                     >
                       <button onClick={() => navigate(`/${friend?.username}`)}>
-                        <Avatar className="w-12 h-12">
-                          <AvatarImage src={friend?.avatar_url || undefined} />
-                          <AvatarFallback className="bg-secondary/20">
-                            <User className="w-6 h-6 text-secondary" />
-                          </AvatarFallback>
-                        </Avatar>
+                        <AvatarClickable
+                          avatarUrl={friend?.avatar_url}
+                          displayName={friend?.display_name}
+                          username={friend?.username}
+                          size="md"
+                        />
                       </button>
                       <button 
                         onClick={() => navigate(`/${friend?.username}`)}
