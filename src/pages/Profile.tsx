@@ -18,6 +18,8 @@ import { User, Edit, MessageCircle, UserPlus, Copy, Wallet, Clock, Lock, Home } 
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import type { Album } from "@/contexts/AlbumsContext";
+import { AvatarClickable } from "@/components/AvatarClickable";
+import { Mail } from "lucide-react";
 
 interface ProfileData {
   id: string;
@@ -263,18 +265,18 @@ export default function Profile() {
         {/* Profile Header */}
         <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 mb-8 -mt-12 sm:-mt-16 relative z-10 px-4">
           {isOwnProfile ? (
-            <AvatarUpload 
-              currentAvatarUrl={profileData.avatar_url} 
-              onUploadComplete={(url) => setProfileData({ ...profileData, avatar_url: url })}
-            />
-          ) : (
-            <Avatar className="w-24 h-24 border-4 border-background">
-              <AvatarImage src={profileData.avatar_url || undefined} />
-              <AvatarFallback className="bg-secondary/20">
-                <User className="w-12 h-12 text-secondary" />
-              </AvatarFallback>
-            </Avatar>
-          )}
+  <AvatarUpload 
+    currentAvatarUrl={profileData.avatar_url} 
+    onUploadComplete={(url) => setProfileData({ ...profileData, avatar_url: url })}
+  />
+) : (
+  <AvatarClickable
+    avatarUrl={profileData.avatar_url}
+    displayName={profileData.display_name}
+    username={profileData.username}
+    size="xl"
+  />
+)}
 
           <div className="flex-1 text-center sm:text-left">
             {isEditing ? (
@@ -319,21 +321,30 @@ export default function Profile() {
                 <p className="text-muted-foreground">@{profileData.username}</p>
                 {profileData.bio && <p className="mt-2">{profileData.bio}</p>}
                 
-                {profileData.show_email && profileData.email && (
-                  <p className="text-sm text-muted-foreground mt-1">{profileData.email}</p>
-                )}
+               {profileData.show_email && profileData.email && (
+  <div className="flex items-center gap-2 mt-2 text-sm text-muted-foreground">
+    <Mail className="w-4 h-4" />
+    <a 
+      href={`mailto:${profileData.email}`}
+      className="hover:text-foreground transition-colors"
+    >
+      {profileData.email}
+    </a>
+  </div>
+)}
 
-                {profileData.show_wallet && profileData.wallet_address && (
-                  <button
-                    onClick={copyWalletAddress}
-                    className="flex items-center gap-2 mt-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    <Wallet className="w-4 h-4" />
-                    <span className="font-mono">
-                      {profileData.wallet_address.slice(0, 6)}...{profileData.wallet_address.slice(-4)}
-                    </span>
-                    <Copy className="w-3 h-3" />
-                  </button>
+{/* Wallet Address Display */}
+{profileData.show_wallet && profileData.wallet_address && (
+  <button
+    onClick={copyWalletAddress}
+    className="flex items-center gap-2 mt-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+  >
+    <Wallet className="w-4 h-4" />
+    <span className="font-mono">
+      {profileData.wallet_address.slice(0, 6)}...{profileData.wallet_address.slice(-4)}
+    </span>
+    <Copy className="w-3 h-3" />
+  </button>
                 )}
 
                 <div className="flex gap-3 mt-4 justify-center sm:justify-start">
