@@ -69,6 +69,16 @@ export function AlbumCard({
     }
   };
 
+  useEffect(() => {
+  console.log('Album image debug:', {
+    albumId: Album.id,
+    title: Album.title,
+    cover_image_url: Album.cover_image_url,
+    first_memory_url: Album.first_memory_url,
+    imageToShow: Album.cover_image_url || Album.first_memory_url
+  });
+}, [Album]);
+
   return (
     <div
       className={cn(
