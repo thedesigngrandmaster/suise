@@ -6,8 +6,9 @@ import { useMessages } from "@/hooks/useMessages";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Send, ArrowLeft, User } from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
+import { formatDistanceToNow, format, isToday, isYesterday } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
+import { AvatarClickable } from "@/components/AvatarClickable";
 
 // Format message time with actual timestamps
 const formatMessageTime = (date: Date): string => {
@@ -26,19 +27,31 @@ export default function Chat() {
   const { threads, messages, loading, fetchConversation, sendMessage, refetch } = useMessages(user?.id);
   const navigate = useNavigate();
   const [newMessage, setNewMessage] = useState("");
-  const [partner, setPartner] = useState<{ display_name: string | null; avatar_url: string | null } | null>(null);
+  const [partner, setPartner] = useState<{ 
+    username: string | null; 
+    display_name: string | null; 
+    avatar_url: string | null;
+  } | null>(null);
+  const [loadingPartner, setLoadingPartner] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (partnerId) {
       fetchConversation(partnerId);
+      
       // Fetch partner details
+      setLoadingPartner(true);
       supabase
         .from("profiles")
-        .select("display_name, avatar_url")
+        .select("username, display_name, avatar_url")
         .eq("id", partnerId)
         .single()
-        .then(({ data }) => setPartner(data));
+        .then(({ data, error }) => {
+          if (!error && data) {
+            setPartner(data);
+          }
+          setLoadingPartner(false);
+        });
     }
   }, [partnerId]);
 
@@ -85,17 +98,12 @@ export default function Chat() {
                   onClick={() => navigate(`/chat/${thread.partnerId}`)}
                   className="w-full flex items-center gap-3 p-4 bg-card rounded-2xl hover:bg-muted transition-colors text-left"
                 >
-                  {thread.partner.avatar_url ? (
-                    <img
-                      src={thread.partner.avatar_url}
-                      alt=""
-                      className="w-12 h-12 rounded-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-12 h-12 rounded-full bg-secondary/20 flex items-center justify-center">
-                      <User className="w-6 h-6 text-secondary" />
-                    </div>
-                  )}
+                  <AvatarClickable
+                    avatarUrl={thread.partner.avatar_url}
+                    displayName={thread.partner.display_name}
+                    username={thread.partner.username}
+                    size="md"
+                  />
                   <div className="flex-1 min-w-0">
                     <div className="flex justify-between items-center mb-1">
                       <p className="font-medium truncate">
@@ -130,14 +138,21 @@ export default function Chat() {
           <button onClick={() => navigate("/chat")} className="lg:hidden">
             <ArrowLeft className="w-5 h-5" />
           </button>
-          {partner?.avatar_url ? (
-            <img src={partner.avatar_url} alt="" className="w-10 h-10 rounded-full object-cover" />
+          {loadingPartner ? (
+            <div className="w-10 h-10 rounded-full bg-muted animate-pulse" />
           ) : (
-            <div className="w-10 h-10 rounded-full bg-secondary/20 flex items-center justify-center">
-              <User className="w-5 h-5 text-secondary" />
-            </div>
+            <AvatarClickable
+              avatarUrl={partner?.avatar_url}
+              displayName={partner?.display_name}
+              username={partner?.username}
+              size="md"
+            />
           )}
-          <p className="font-medium">{partner?.display_name || "Loading..."}</p>
+          <p className="font-medium">
+            {loadingPartner 
+              ? "Loading..." 
+              : partner?.display_name || partner?.username || "Unknown User"}
+          </p>
         </div>
 
         {/* Messages */}
