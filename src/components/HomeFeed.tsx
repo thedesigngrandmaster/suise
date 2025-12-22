@@ -42,6 +42,9 @@ export function HomeFeed() {
   useEffect(() => {
     const fetchFeatured = async () => {
       setLoadingFeatured(true);
+      
+      console.log('Fetching featured albums...');
+      
       const { data, error } = await supabase
         .from("albums")
         .select(`
@@ -53,19 +56,41 @@ export function HomeFeed() {
         .order("love_count", { ascending: false })
         .limit(12);
 
+      if (error) {
+        console.error('Error fetching featured albums:', error);
+      }
+
       if (!error && data) {
+        console.log('Featured albums raw data:', data);
+        
         const processed = data.map(album => {
           const sortedMemories = album.memories?.sort((a: any, b: any) => 
             (a.display_order || 0) - (b.display_order || 0)
           );
+          
+          const firstMemoryUrl = sortedMemories?.[0]?.image_url || null;
+          const coverImage = album.cover_image_url || firstMemoryUrl;
+          
+          console.log('Processing featured album:', {
+            id: album.id,
+            title: album.title,
+            cover_image_url: album.cover_image_url,
+            firstMemoryUrl: firstMemoryUrl,
+            finalCoverImage: coverImage
+          });
+          
           return {
             ...album,
-            first_memory_url: sortedMemories?.[0]?.image_url || album.cover_image_url || null,
+            cover_image_url: coverImage,
+            first_memory_url: firstMemoryUrl,
             memories: undefined,
           };
         });
+        
+        console.log('Processed featured albums:', processed);
         setFeaturedAlbums(processed as Album[]);
       }
+      
       setLoadingFeatured(false);
     };
 
