@@ -33,6 +33,8 @@ export default function Settings() {
   const [isPublic, setIsPublic] = useState(profile?.is_public ?? true);
   const [showEmail, setShowEmail] = useState(profile?.show_email ?? false);
   const [showWallet, setShowWallet] = useState(profile?.show_wallet ?? true);
+  const [pushNotifications, setPushNotifications] = useState(profile?.push_notifications_enabled ?? true);
+  const [emailNotifications, setEmailNotifications] = useState(profile?.email_notifications_enabled ?? false);
 
   useEffect(() => {
     if (profile) {
@@ -40,6 +42,8 @@ export default function Settings() {
       setIsPublic(profile.is_public);
       setShowEmail(profile.show_email);
       setShowWallet(profile.show_wallet);
+      setPushNotifications(profile.push_notifications_enabled ?? true);
+      setEmailNotifications(profile.email_notifications_enabled ?? false);
     }
   }, [profile]);
 
@@ -57,6 +61,16 @@ export default function Settings() {
       show_wallet: showWallet,
     });
     await refreshProfile();
+  };
+
+  const handleSaveNotifications = async () => {
+    if (!user) return;
+    await updateProfile(user.id, {
+      push_notifications_enabled: pushNotifications,
+      email_notifications_enabled: emailNotifications,
+    });
+    await refreshProfile();
+    toast.success("Notification preferences updated!");
   };
 
   const handleSignOut = async () => {
@@ -174,7 +188,7 @@ export default function Settings() {
               <Switch checked={showWallet} onCheckedChange={setShowWallet} />
             </div>
             <Button variant="suise" onClick={handleSavePrivacy} disabled={updating}>
-              {updating ? "Saving..." : "Save Changes"}
+              {updating ? "Saving..." : "Save Privacy Settings"}
             </Button>
           </div>
         </section>
@@ -189,17 +203,20 @@ export default function Settings() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="font-medium">Push Notifications</p>
-                <p className="text-sm text-muted-foreground">Receive notifications for activity</p>
+                <p className="text-sm text-muted-foreground">Receive in-app notifications for activity</p>
               </div>
-              <Switch defaultChecked />
+              <Switch checked={pushNotifications} onCheckedChange={setPushNotifications} />
             </div>
             <div className="flex items-center justify-between">
               <div>
                 <p className="font-medium">Email Notifications</p>
-                <p className="text-sm text-muted-foreground">Receive email updates</p>
+                <p className="text-sm text-muted-foreground">Receive email updates (coming soon)</p>
               </div>
-              <Switch />
+              <Switch checked={emailNotifications} onCheckedChange={setEmailNotifications} />
             </div>
+            <Button variant="suise" onClick={handleSaveNotifications} disabled={updating}>
+              {updating ? "Saving..." : "Save Notification Settings"}
+            </Button>
           </div>
         </section>
 
