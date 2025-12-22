@@ -74,6 +74,7 @@ export default function AlbumDetail() {
   const [collaboratorsDialogOpen, setCollaboratorsDialogOpen] = useState(false);
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
   const [editMemoryDialogOpen, setEditMemoryDialogOpen] = useState(false);
+  const [changeCoverDialogOpen, setChangeCoverDialogOpen] = useState(false);
   const [editTitle, setEditTitle] = useState("");
   const [editDescription, setEditDescription] = useState("");
   const [transferUsername, setTransferUsername] = useState("");
@@ -370,6 +371,24 @@ export default function AlbumDetail() {
     setSelectedImage(null);
   };
 
+  const handleSetCover = async (memoryImageUrl: string) => {
+    if (!albumId) return;
+    
+    const { error } = await supabase
+      .from("albums")
+      .update({ cover_image_url: memoryImageUrl })
+      .eq("id", albumId);
+
+    if (error) {
+      toast.error("Failed to update cover photo");
+      return;
+    }
+
+    setAlbum((prev) => prev ? { ...prev, cover_image_url: memoryImageUrl } : null);
+    setChangeCoverDialogOpen(false);
+    toast.success("Cover photo updated!");
+  };
+
   if (loading) {
     return (
       <DashboardLayout activeTab="explore" onTabChange={(tab) => navigate(`/${tab === "home" ? "" : tab}`)}>
@@ -462,6 +481,10 @@ export default function AlbumDetail() {
                   <DropdownMenuItem onClick={() => setEditDialogOpen(true)}>
                     <Edit className="w-4 h-4 mr-2" />
                     Edit Album
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setChangeCoverDialogOpen(true)}>
+                    <ImagePlus className="w-4 h-4 mr-2" />
+                    Change Cover Photo
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => setCollaboratorsDialogOpen(true)}>
                     <UserPlus className="w-4 h-4 mr-2" />
@@ -731,6 +754,46 @@ export default function AlbumDetail() {
               ownerId={album.owner_id}
               isOwner={isOwner || false}
             />
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Change Cover Photo Dialog */}
+      <Dialog open={changeCoverDialogOpen} onOpenChange={setChangeCoverDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Change Cover Photo</DialogTitle>
+            <DialogDescription>
+              Select a photo from this album to use as the cover
+            </DialogDescription>
+          </DialogHeader>
+          {memories.length === 0 ? (
+            <div className="text-center py-8">
+              <p className="text-muted-foreground">No photos in this album yet</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-3 gap-2">
+              {memories.map((memory) => (
+                <button
+                  key={memory.id}
+                  onClick={() => handleSetCover(memory.image_url)}
+                  className="relative aspect-square rounded-lg overflow-hidden hover:ring-2 hover:ring-secondary transition-all"
+                >
+                  <img
+                    src={memory.image_url}
+                    alt=""
+                    className="w-full h-full object-cover"
+                  />
+                  {album?.cover_image_url === memory.image_url && (
+                    <div className="absolute inset-0 bg-secondary/20 flex items-center justify-center">
+                      <div className="bg-secondary text-secondary-foreground px-2 py-1 rounded text-xs font-bold">
+                        Current
+                      </div>
+                    </div>
+                  )}
+                </button>
+              ))}
+            </div>
           )}
         </DialogContent>
       </Dialog>
