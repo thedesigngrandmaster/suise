@@ -99,16 +99,22 @@ export function AlbumsProvider({ children }: { children: ReactNode }) {
       setAlbums([]);
     } else {
       const processed = (data || []).map((album) => {
-        const sortedMemories = album.memories?.sort(
-          (a: any, b: any) =>
-            (a.display_order || 0) - (b.display_order || 0)
-        );
-        return {
-          ...album,
-          first_memory_url: sortedMemories?.[0]?.image_url || null,
-          memories: undefined,
-        };
-      });
+  const sortedMemories = album.memories?.sort(
+    (a: any, b: any) => (a.display_order || 0) - (b.display_order || 0)
+  );
+  
+  // Use cover_image_url first, fallback to first memory
+  const firstImage = album.cover_image_url || 
+                     sortedMemories?.[0]?.image_url || 
+                     null;
+  
+  return {
+    ...album,
+    cover_image_url: album.cover_image_url || sortedMemories?.[0]?.image_url,
+    first_memory_url: firstImage,
+    memories: undefined, // Remove to reduce payload
+  };
+});
       setAlbums(processed);
     }
 
