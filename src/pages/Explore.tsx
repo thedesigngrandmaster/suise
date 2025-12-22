@@ -134,13 +134,17 @@ export default function Explore() {
       return followedAlbums;
     }
     
+    // Sort albums based on active category
     return [...albums].sort((a, b) => {
       if (activeCategory === "trending") {
+        // Trending = Most loves
         return (b.love_count || 0) - (a.love_count || 0);
       } else if (activeCategory === "new") {
+        // New = Most recent
         return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
       }
-      return 0;
+      // Default = Most views
+      return (b.view_count || 0) - (a.view_count || 0);
     });
   };
   
