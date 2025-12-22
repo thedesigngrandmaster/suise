@@ -17,6 +17,8 @@ export interface Profile {
   is_public: boolean;
   show_email: boolean;
   show_wallet: boolean;
+  push_notifications_enabled?: boolean;
+  email_notifications_enabled?: boolean;
 }
 
 export interface AuthContextType {
