@@ -1,5 +1,4 @@
 import { Routes, Route } from "react-router-dom";
-import { createClient } from "@supabase/supabase-js";
 
 import Index from "./pages/Index";
 import Vault from "./pages/Vault";
@@ -14,11 +13,6 @@ import Auth from "./pages/Auth";
 import Notifications from "./pages/Notifications";
 import NotFound from "./pages/NotFound";
 import TestAlbums from "@/pages/TestAlbums";
-
-export const supabase = createClient(
-  import.meta.env.VITE_SUPABASE_URL!,
-  import.meta.env.VITE_SUPABASE_ANON_KEY!
-);
 
 const App = () => (
   <Routes>
