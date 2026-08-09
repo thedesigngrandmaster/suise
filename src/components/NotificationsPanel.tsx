@@ -35,11 +35,24 @@ const notificationIcons = {
   new_user: Users,
 };
 
-export function NotificationsPanel() {
+interface NotificationsPanelProps {
+  isOpen?: boolean;
+  onClose?: () => void;
+}
+
+export function NotificationsPanel({ isOpen, onClose }: NotificationsPanelProps = {}) {
   const { user } = useAuth();
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications(user?.id);
   const navigate = useNavigate();
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = isOpen ?? internalOpen;
+  const setOpen = (value: boolean) => {
+    if (isOpen !== undefined) {
+      if (!value) onClose?.();
+      return;
+    }
+    setInternalOpen(value);
+  };
 
   const handleNotificationClick = (notification: any) => {
     markAsRead(notification.id);
