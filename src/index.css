@@ -45,12 +45,15 @@
     --gradient-yooma: linear-gradient(135deg, hsl(55 100% 71%) 0%, hsl(258 87% 70%) 50%, hsl(172 85% 69%) 100%);
     --gradient-card: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(220 20% 98%) 100%);
     --gradient-streak: linear-gradient(135deg, hsl(55 100% 71%) 0%, hsl(45 100% 60%) 100%);
+    --gradient-soft: radial-gradient(120% 120% at 20% 10%, hsl(258 87% 92%) 0%, hsl(258 60% 97%) 45%, hsl(220 20% 99%) 100%);
+    --gradient-orb: radial-gradient(circle at 35% 30%, hsl(258 90% 88%) 0%, hsl(266 80% 78%) 40%, hsl(172 70% 82%) 100%);
 
-    /* Shadows */
-    --shadow-soft: 0 4px 0 0 hsl(0 0% 10%);
-    --shadow-card: 0 4px 0 0 hsl(0 0% 10%), 0 8px 24px -8px hsl(0 0% 10% / 0.1);
-    --shadow-button: 0 3px 0 0 hsl(0 0% 10%);
-    --shadow-button-pressed: 0 1px 0 0 hsl(0 0% 10%);
+    /* Soft depth shadows */
+    --shadow-soft: 0 1px 2px hsl(258 40% 25% / 0.04), 0 6px 18px -10px hsl(258 40% 25% / 0.14);
+    --shadow-card: 0 1px 2px hsl(258 40% 25% / 0.04), 0 10px 30px -14px hsl(258 40% 25% / 0.18);
+    --shadow-float: 0 2px 4px hsl(258 40% 25% / 0.04), 0 24px 60px -24px hsl(258 40% 25% / 0.28);
+    --shadow-button: 0 1px 2px hsl(258 40% 25% / 0.06), 0 6px 16px -8px hsl(258 60% 45% / 0.35);
+    --shadow-button-pressed: 0 1px 2px hsl(258 40% 25% / 0.08);
 
     --sidebar-background: 0 0% 100%;
     --sidebar-foreground: 0 0% 10%;
@@ -275,11 +278,33 @@
   .yooma-gradient {
     background: var(--gradient-yooma);
   }
-  
-  .neubrutalist-border {
-    @apply border-2 border-foreground;
+
+  .soft-surface {
+    background: var(--gradient-soft);
   }
-  
+
+  .soft-card {
+    @apply rounded-3xl border border-border/60 bg-card;
+    box-shadow: var(--shadow-card);
+  }
+
+  .soft-chip {
+    @apply inline-flex items-center gap-2 rounded-full border border-border/70 bg-card px-4 py-2 text-sm font-medium transition-all duration-200;
+    box-shadow: var(--shadow-soft);
+  }
+
+  .soft-lift {
+    @apply transition-all duration-300;
+  }
+  .soft-lift:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-float);
+  }
+
+  .neubrutalist-border {
+    @apply border border-border;
+  }
+
   .neubrutalist-shadow {
     box-shadow: var(--shadow-card);
   }
@@ -290,7 +315,7 @@
   
   .neubrutalist-button-pressed {
     box-shadow: var(--shadow-button-pressed);
-    transform: translateY(2px);
+    transform: translateY(1px);
   }
 }
 

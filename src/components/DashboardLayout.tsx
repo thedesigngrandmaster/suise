@@ -7,7 +7,7 @@ import { UserMenu, UserAvatar } from "./UserMenu";
 import { UserDetailsPanel } from "./UserDetailsPanel";
 import { SearchModal } from "./SearchModal";
 import { NotificationsPanel } from "./NotificationsPanel";
-import { UploadModal } from "./UploadModal";
+import { UploadModal } from "@/components/UploadModal";
 import { BottomNav } from "./BottomNav";
 import { useAuth } from "@/hooks/useAuth";
 import { useNotifications } from "@/hooks/useNotifications";
@@ -205,10 +205,10 @@ function DesktopNavItem({ item, isActive, collapsed, onClick, badge }: DesktopNa
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
         className={cn(
-          "w-full flex items-center gap-4 px-4 py-3 rounded-full transition-all duration-200 group",
+          "w-full flex items-center gap-4 px-4 py-3 rounded-2xl transition-all duration-200 group",
           isActive
-            ? "bg-muted font-bold"
-            : "hover:bg-muted/50"
+            ? "bg-secondary/12 font-semibold"
+            : "hover:bg-muted/60"
         )}
       >
         <div className={cn(
@@ -229,8 +229,8 @@ function DesktopNavItem({ item, isActive, collapsed, onClick, badge }: DesktopNa
         </div>
         {!collapsed && (
           <span className={cn(
-            "text-lg transition-all duration-200",
-            isActive ? "font-bold text-secondary" : "font-medium"
+            "text-base transition-all duration-200",
+            isActive ? "font-semibold text-secondary" : "font-medium text-foreground/80"
           )}>
             {item.label}
           </span>

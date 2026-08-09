@@ -89,7 +89,7 @@ export function BottomNav({ activeTab = "home", onTabChange, onUpload }: BottomN
 
       {/* Bottom Navigation Bar */}
       <nav className="fixed bottom-0 left-0 right-0 z-40 pb-safe">
-        <div className="mx-4 mb-4 bg-background/80 backdrop-blur-xl border border-border/50 rounded-3xl shadow-2xl">
+        <div className="mx-4 mb-4 bg-card/85 backdrop-blur-xl border border-border/60 rounded-[1.75rem] shadow-neubrutalist">
           <div className="flex items-center justify-around h-16 px-4">
             {/* Home */}
             <NavButton
@@ -176,8 +176,8 @@ function NavButton({ icon: Icon, label, active, onClick, badge }: NavButtonProps
       className="flex flex-col items-center gap-1 min-w-[50px] transition-all duration-200 active:scale-95"
     >
       <div className={cn(
-        "p-2 rounded-xl transition-all duration-200 relative",
-        active ? "bg-secondary text-secondary-foreground" : "text-muted-foreground"
+        "p-2 rounded-2xl transition-all duration-200 relative",
+        active ? "bg-secondary/15 text-secondary" : "text-muted-foreground"
       )}>
         <Icon className="w-5 h-5" />
         {badge && badge > 0 && (
@@ -187,7 +187,7 @@ function NavButton({ icon: Icon, label, active, onClick, badge }: NavButtonProps
         )}
       </div>
       <span className={cn(
-        "text-xs",
+        "text-[11px]",
         active ? "text-secondary font-semibold" : "text-muted-foreground"
       )}>
         {label}
