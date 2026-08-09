@@ -7,7 +7,7 @@ import { UserMenu, UserAvatar } from "./UserMenu";
 import { UserDetailsPanel } from "./UserDetailsPanel";
 import { SearchModal } from "./SearchModal";
 import { NotificationsPanel } from "./NotificationsPanel";
-import { UploadModal } from "./UploadModal";
+import { UploadModal } from "@/components/UploadModal";
 import { BottomNav } from "./BottomNav";
 import { useAuth } from "@/hooks/useAuth";
 import { useNotifications } from "@/hooks/useNotifications";
