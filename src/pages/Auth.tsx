@@ -101,17 +101,19 @@ export default function Auth() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+    <div className="soft-surface min-h-screen flex items-center justify-center p-5">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <img src={logoMascot} alt="Suise" className="w-20 h-20 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold font-bricolage">
+          <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-3xl border border-border/60 bg-card shadow-neubrutalist">
+            <img src={logoMascot} alt="Suise" className="w-12 h-12" />
+          </div>
+          <h1 className="text-3xl font-bold font-bricolage tracking-tight">
             {mode === "login" && "Welcome Back"}
             {mode === "signup" && "Create Account"}
             {mode === "forgot-password" && "Reset Password"}
             {mode === "reset-password" && "New Password"}
           </h1>
-          <p className="text-muted-foreground mt-2">
+          <p className="text-muted-foreground mt-2 text-sm">
             {mode === "login" && "Sign in to continue to Suise"}
             {mode === "signup" && "Start preserving your memories"}
             {mode === "forgot-password" && "We'll send you a reset link"}
@@ -119,7 +121,7 @@ export default function Auth() {
           </p>
         </div>
 
-        <div className="bg-card rounded-2xl border-2 border-border p-6">
+        <div className="soft-card p-6 sm:p-8">
           {(mode === "forgot-password" || mode === "reset-password") && (
             <button
               onClick={() => setMode("login")}
@@ -216,7 +218,12 @@ export default function Auth() {
               </button>
             )}
 
-            <Button type="submit" variant="suise" className="w-full" disabled={loading}>
+            <Button
+              type="submit"
+              size="lg"
+              className="w-full rounded-full bg-secondary text-secondary-foreground hover:bg-secondary/90"
+              disabled={loading}
+            >
               {loading ? "Loading..." : (
                 mode === "login" ? "Sign In" :
                 mode === "signup" ? "Create Account" :
@@ -240,7 +247,8 @@ export default function Auth() {
               <Button
                 type="button"
                 variant="outline"
-                className="w-full"
+                size="lg"
+                className="w-full rounded-full border-border/70 bg-card"
                 onClick={handleGoogleLogin}
               >
                 <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
