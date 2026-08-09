@@ -17,7 +17,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { User, Edit, MessageCircle, UserPlus, Copy, Wallet, Clock, Lock, Home } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import type { Album } from "@/contexts/AlbumsContext";
+import type { Album } from "@/hooks/useAlbums";
 import { AvatarClickable } from "@/components/AvatarClickable";
 import { Mail } from "lucide-react";
 
@@ -120,12 +120,12 @@ export default function Profile() {
         return {
           ...album,
           first_memory_url: sortedMemories?.[0]?.image_url || album.cover_image_url || null,
-          follower_count: album.album_follows?.length || album.follower_count || 0,
+          follower_count: album.album_follows?.length || 0,
           memories: undefined,
           album_follows: undefined,
         };
       });
-      setProfileAlbums(albumsWithFirstMemory as Album[]);
+      setProfileAlbums(albumsWithFirstMemory as unknown as Album[]);
     }
     
     setLoadingAlbums(false);

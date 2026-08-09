@@ -20,7 +20,7 @@ export function useProfile() {
     setUpdating(true);
     const { error } = await supabase
       .from("profiles")
-      .update({ ...data, updated_at: new Date().toISOString() })
+      .update({ ...data, updated_at: new Date().toISOString() } as never)
       .eq("id", userId);
 
     setUpdating(false);

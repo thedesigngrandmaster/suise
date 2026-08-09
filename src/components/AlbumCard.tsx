@@ -6,10 +6,11 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
 interface AlbumCardProps {
-  album: Album;
+  album: Partial<Album> & Pick<Album, "id" | "title" | "owner_id">;
   onClick: () => void;
   showOwner?: boolean;
   showFollowButton?: boolean;
+  onDelete?: () => void;
 }
 
 export function AlbumCard({ album, onClick, showOwner = false, showFollowButton = false }: AlbumCardProps) {
