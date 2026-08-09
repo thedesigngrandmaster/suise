@@ -153,10 +153,10 @@ export default function Explore() {
 
   return (
     <DashboardLayout activeTab="explore" onTabChange={(tab) => navigate(`/${tab === "home" ? "" : tab}`)}>
-      <div className="max-w-4xl mx-auto px-4 py-6">
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold font-bricolage">Explore</h1>
-          <p className="text-muted-foreground">Discover amazing memories from the community</p>
+      <div className="max-w-5xl mx-auto px-5 py-8 sm:py-10">
+        <div className="mb-7">
+          <h1 className="text-3xl font-bold font-bricolage tracking-tight">Explore</h1>
+          <p className="text-muted-foreground mt-1">Discover memories shared by the community</p>
         </div>
 
         {/* Search Bar */}
@@ -166,7 +166,7 @@ export default function Explore() {
             placeholder="Search users (@username) or albums..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 h-12 rounded-full bg-muted border-none"
+            className="pl-11 h-12 rounded-full bg-card border-border/60 shadow-neubrutalist-sm"
           />
           
           {(searchResults.length > 0 || isSearching) && searchQuery && (
@@ -217,7 +217,7 @@ export default function Explore() {
         </div>
 
         {/* Categories */}
-        <div className="flex gap-3 mb-6 overflow-x-auto pb-2">
+        <div className="flex gap-2.5 mb-7 overflow-x-auto pb-2 -mx-1 px-1">
           <CategoryPill 
             icon={<TrendingUp className="w-4 h-4" />} 
             label="Trending" 
@@ -297,10 +297,10 @@ function CategoryPill({
   return (
     <button
       onClick={onClick}
-      className={`flex items-center gap-2 px-4 py-2 rounded-full font-medium transition-colors whitespace-nowrap ${
+      className={`flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-medium transition-all duration-200 whitespace-nowrap ${
         active
-          ? "bg-secondary text-secondary-foreground"
-          : "bg-muted hover:bg-muted/80"
+          ? "bg-secondary text-secondary-foreground shadow-neubrutalist-sm"
+          : "border border-border/70 bg-card text-muted-foreground hover:text-foreground hover:border-border shadow-neubrutalist-sm"
       }`}
     >
       {icon}
