@@ -61,7 +61,7 @@ export function AlbumCard({ album, onClick, showOwner = false, showFollowButton 
         className="cursor-pointer"
       >
         {/* Album Image */}
-        <div className="aspect-square rounded-2xl overflow-hidden bg-muted relative">
+        <div className="aspect-square rounded-3xl overflow-hidden bg-muted relative border border-border/50 shadow-neubrutalist-sm transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-neubrutalist">
           {imageUrl ? (
             <img
               src={imageUrl}
