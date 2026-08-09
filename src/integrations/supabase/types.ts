@@ -175,6 +175,53 @@ export type Database = {
           },
         ]
       }
+      bot_album_queue: {
+        Row: {
+          bot_user_id: string
+          cover_image_url: string | null
+          created_at: string | null
+          description: string | null
+          id: string
+          memory_captions: string[] | null
+          memory_urls: string[]
+          published: boolean | null
+          scheduled_for: string
+          title: string
+        }
+        Insert: {
+          bot_user_id: string
+          cover_image_url?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          memory_captions?: string[] | null
+          memory_urls: string[]
+          published?: boolean | null
+          scheduled_for: string
+          title: string
+        }
+        Update: {
+          bot_user_id?: string
+          cover_image_url?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          memory_captions?: string[] | null
+          memory_urls?: string[]
+          published?: boolean | null
+          scheduled_for?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bot_album_queue_bot_user_id_fkey"
+            columns: ["bot_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       connections: {
         Row: {
           addressee_id: string
@@ -377,6 +424,7 @@ export type Database = {
           display_name: string | null
           email: string | null
           id: string
+          is_bot: boolean | null
           is_public: boolean | null
           last_streak_date: string | null
           show_email: boolean | null
@@ -394,6 +442,7 @@ export type Database = {
           display_name?: string | null
           email?: string | null
           id: string
+          is_bot?: boolean | null
           is_public?: boolean | null
           last_streak_date?: string | null
           show_email?: boolean | null
@@ -411,6 +460,7 @@ export type Database = {
           display_name?: string | null
           email?: string | null
           id?: string
+          is_bot?: boolean | null
           is_public?: boolean | null
           last_streak_date?: string | null
           show_email?: boolean | null
