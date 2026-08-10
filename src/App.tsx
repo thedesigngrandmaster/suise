@@ -13,6 +13,8 @@ import Auth from "./pages/Auth";
 import Notifications from "./pages/Notifications";
 import NotFound from "./pages/NotFound";
 import TestAlbums from "@/pages/TestAlbums";
+import WalletPage from "./pages/Wallet";
+import Earn from "./pages/Earn";
 
 const App = () => (
   <Routes>
@@ -22,6 +24,8 @@ const App = () => (
     <Route path="/vault" element={<Vault />} />
     <Route path="/explore" element={<Explore />} />
     <Route path="/connect" element={<Connect />} />
+    <Route path="/wallet" element={<WalletPage />} />
+    <Route path="/earn" element={<Earn />} />
     <Route path="/settings" element={<Settings />} />
     <Route path="/chat" element={<Chat />} />
     <Route path="/chat/:partnerId" element={<Chat />} />

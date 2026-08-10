@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Home, Plus, Archive, Compass, Users, MessageCircle, Bell, Settings, User, LogOut, X } from "lucide-react";
+import { Home, Plus, Archive, Compass, Users, MessageCircle, Bell, Settings, User, LogOut, X, Wallet, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "./ui/button";
 import { useAuth } from "@/hooks/useAuth";
@@ -67,6 +67,8 @@ export function BottomNav({ activeTab = "home", onTabChange, onUpload }: BottomN
               <MobileNavLink icon={Users} label="Connect" onClick={() => handleNavigation("connect")} active={activeTab === "connect"} />
               <MobileNavLink icon={MessageCircle} label="Chat" onClick={() => handleNavigation("chat")} active={activeTab === "chat"} badge={unreadMessageCount} />
               <MobileNavLink icon={Bell} label="Notifications" onClick={() => handleNavigation("notifications")} active={activeTab === "notifications"} badge={unreadCount} />
+              <MobileNavLink icon={Wallet} label="Wallet" onClick={() => handleNavigation("wallet")} active={activeTab === "wallet"} />
+              <MobileNavLink icon={Sparkles} label="Earn" onClick={() => handleNavigation("earn")} active={activeTab === "earn"} />
               
               <div className="h-px bg-border my-4" />
               
@@ -88,9 +90,13 @@ export function BottomNav({ activeTab = "home", onTabChange, onUpload }: BottomN
       )}
 
       {/* Bottom Navigation Bar */}
-      <nav className="fixed bottom-0 left-0 right-0 z-40 pb-safe">
-        <div className="mx-4 mb-4 bg-card/85 backdrop-blur-xl border border-border/60 rounded-[1.75rem] shadow-neubrutalist">
-          <div className="flex items-center justify-around h-16 px-4">
+      <nav
+        className="fixed bottom-0 left-0 right-0 z-40"
+        style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+        aria-label="Primary"
+      >
+        <div className="mx-3 sm:mx-4 mb-3 sm:mb-4 nav-pill">
+          <div className="flex items-center justify-around h-[68px] px-2 sm:px-4">
             {/* Home */}
             <NavButton
               icon={Home}
@@ -107,12 +113,13 @@ export function BottomNav({ activeTab = "home", onTabChange, onUpload }: BottomN
               onClick={() => handleNavigation("explore")}
             />
 
-            {/* FAB Upload Button */}
+            {/* Primary action */}
             <Button
               size="icon"
-              variant="suise"
+              aria-label="Add a memory"
               onClick={onUpload}
-              className="shadow-neubrutalist h-14 w-14 rounded-full hover:scale-110 transition-transform"
+              className="h-14 w-14 -mt-6 rounded-full bg-primary text-primary-foreground hover:bg-primary hover:scale-105 active:scale-95 transition-transform"
+              style={{ boxShadow: "var(--shadow-float)" }}
             >
               <Plus className="w-6 h-6" />
             </Button>

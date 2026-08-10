@@ -344,6 +344,62 @@
     -webkit-mask-position: center;
     mask-position: center;
   }
+
+  .streak-flicker {
+    animation: streak-flicker 2.4s ease-in-out infinite;
+    transform-origin: 50% 80%;
+  }
+
+  .streak-halo {
+    animation: streak-halo 2.4s ease-out infinite;
+  }
+
+  .streak-celebrate {
+    animation: streak-celebrate 1.1s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .nav-pill {
+    @apply rounded-[1.75rem] border border-border/60 bg-card/85 backdrop-blur-xl;
+    box-shadow: var(--shadow-float);
+  }
+
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@keyframes streak-flicker {
+  0%, 100% { transform: scale(1) rotate(0deg); }
+  35% { transform: scale(1.08) rotate(-4deg); }
+  65% { transform: scale(0.97) rotate(3deg); }
+}
+
+@keyframes streak-halo {
+  0% { opacity: 0.45; transform: scale(1); }
+  70%, 100% { opacity: 0; transform: scale(1.5); }
+}
+
+@keyframes streak-celebrate {
+  0% { transform: scale(1); }
+  30% { transform: scale(1.22) rotate(-3deg); }
+  55% { transform: scale(0.96) rotate(2deg); }
+  100% { transform: scale(1) rotate(0deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .streak-flicker,
+  .streak-halo,
+  .streak-celebrate,
+  .streak-glow,
+  .yooma-bounce,
+  .yooma-wave {
+    animation: none !important;
+  }
 }
 
 @keyframes streak-pulse {

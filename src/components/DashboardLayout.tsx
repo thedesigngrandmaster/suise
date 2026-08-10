@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Home, Archive, Compass, Settings, Plus, Search, Bell, MessageCircle, Users } from "lucide-react";
+import { Home, Archive, Compass, Settings, Plus, Search, Bell, MessageCircle, Users, Wallet, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "./ui/button";
 import { BrandHeader } from "./BrandHeader";
@@ -26,6 +26,8 @@ const navItems: NavItem[] = [
   { id: "explore", icon: Compass, label: "Explore" },
   { id: "connect", icon: Users, label: "Connect" },
   { id: "chat", icon: MessageCircle, label: "Chat" },
+  { id: "wallet", icon: Wallet, label: "Wallet" },
+  { id: "earn", icon: Sparkles, label: "Earn" },
 ];
 
 interface DashboardLayoutProps {
