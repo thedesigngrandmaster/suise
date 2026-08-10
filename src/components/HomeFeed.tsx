@@ -8,6 +8,8 @@ import { YoomaAvatar } from "@/components/YoomaAvatar";
 import { StreakBadge } from "@/components/StreakBadge";
 import { AlbumCard } from "@/components/AlbumCard";
 import { OnboardingTutorial } from "@/components/OnboardingTutorial";
+import { WelcomeOnboarding } from "@/components/WelcomeOnboarding";
+import { BrandHeader } from "@/components/BrandHeader";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -22,6 +24,7 @@ export function HomeFeed() {
   const [activeTab, setActiveTab] = useState<"for-you" | "following">("for-you");
   const [uploadOpen, setUploadOpen] = useState(false);
   const [tutorialOpen, setTutorialOpen] = useState(false);
+  const [welcomeOpen, setWelcomeOpen] = useState(false);
   const [featuredAlbums, setFeaturedAlbums] = useState<Album[]>([]);
   const [loadingFeatured, setLoadingFeatured] = useState(false);
 
@@ -31,7 +34,7 @@ export function HomeFeed() {
   useEffect(() => {
     if (isNewUser && user && !localStorage.getItem(`tutorial-shown-${user.id}`)) {
       const timer = setTimeout(() => {
-        setTutorialOpen(true);
+        setWelcomeOpen(true);
         localStorage.setItem(`tutorial-shown-${user.id}`, "true");
       }, 1000);
       return () => clearTimeout(timer);
@@ -122,6 +125,12 @@ export function HomeFeed() {
       onTabChange={(tab) => navigate(`/${tab === "home" ? "" : tab}`)}
     >
       <div className="max-w-2xl mx-auto px-4 py-6">
+        {/* Brand + streak */}
+        <div className="hidden lg:flex items-center justify-between mb-6">
+          <BrandHeader />
+          <StreakBadge count={streakCount} size="md" />
+        </div>
+
         {/* Tabs */}
         <div className="flex items-center justify-center gap-8 mb-6 border-b border-border">
           <button
@@ -152,11 +161,6 @@ export function HomeFeed() {
               <div className="absolute bottom-0 left-0 right-0 h-1 bg-secondary rounded-full" />
             )}
           </button>
-        </div>
-
-        {/* Desktop header actions */}
-        <div className="hidden lg:flex items-center justify-end mb-6">
-          <StreakBadge count={streakCount} />
         </div>
 
         {/* Mobile streak badge */}
