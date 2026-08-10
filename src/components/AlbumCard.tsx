@@ -1,4 +1,4 @@
-import { Heart, Eye, Users, BookmarkCheck, Bookmark } from "lucide-react";
+import { Heart, Eye, Users, BookmarkCheck, Bookmark, Globe, Lock, ArrowRightLeft } from "lucide-react";
 import { Album } from "@/hooks/useAlbums";
 import { useAlbumFollows } from "@/hooks/useAlbumFollows";
 import { useAuth } from "@/hooks/useAuth";
@@ -11,9 +11,18 @@ interface AlbumCardProps {
   showOwner?: boolean;
   showFollowButton?: boolean;
   onDelete?: () => void;
+  showVisibility?: boolean;
+  onTransfer?: () => void;
 }
 
-export function AlbumCard({ album, onClick, showOwner = false, showFollowButton = false }: AlbumCardProps) {
+export function AlbumCard({
+  album,
+  onClick,
+  showOwner = false,
+  showFollowButton = false,
+  showVisibility = false,
+  onTransfer,
+}: AlbumCardProps) {
   const { user } = useAuth();
   const { isFollowing, followAlbum, unfollowAlbum } = useAlbumFollows(user?.id);
   
@@ -44,16 +53,6 @@ export function AlbumCard({ album, onClick, showOwner = false, showFollowButton 
     }
   };
 
-  // Debug logging (remove in production)
-  console.log('AlbumCard render:', {
-    id: album.id,
-    title: album.title,
-    cover_image_url: album.cover_image_url,
-    first_memory_url: album.first_memory_url,
-    imageUrl: imageUrl,
-    hasImage: !!imageUrl
-  });
-
   return (
     <div className="group relative">
       <div 
@@ -62,19 +61,29 @@ export function AlbumCard({ album, onClick, showOwner = false, showFollowButton 
       >
         {/* Album Image */}
         <div className="aspect-square rounded-3xl overflow-hidden bg-muted relative border border-border/50 shadow-neubrutalist-sm transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-neubrutalist">
+          {/* Visibility badge */}
+          {showVisibility && (
+            <span
+              className={cn(
+                "absolute top-2 left-2 z-10 inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold backdrop-blur-md",
+                album.is_public
+                  ? "bg-accent/85 text-accent-foreground"
+                  : "bg-background/85 text-foreground"
+              )}
+            >
+              {album.is_public ? <Globe className="w-3 h-3" /> : <Lock className="w-3 h-3" />}
+              {album.is_public ? "Public" : "Private"}
+            </span>
+          )}
           {imageUrl ? (
             <img
               src={imageUrl}
               alt={album.title}
               className="w-full h-full object-cover transition-transform group-hover:scale-105"
+              loading="lazy"
               onError={(e) => {
-                console.error('Image failed to load:', imageUrl);
-                // Set a placeholder on error
                 e.currentTarget.style.display = 'none';
                 e.currentTarget.parentElement?.classList.add('flex', 'items-center', 'justify-center');
-              }}
-              onLoad={() => {
-                console.log('Image loaded successfully:', imageUrl);
               }}
             />
           ) : (
@@ -99,6 +108,24 @@ export function AlbumCard({ album, onClick, showOwner = false, showFollowButton 
               </span>
             </div>
           </div>
+
+          {/* Transfer ownership */}
+          {isOwner && onTransfer && (
+            <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
+              <Button
+                size="icon"
+                variant="secondary"
+                aria-label={`Hand over ${album.title}`}
+                className="h-8 w-8 rounded-full shadow-lg"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onTransfer();
+                }}
+              >
+                <ArrowRightLeft className="w-4 h-4" />
+              </Button>
+            </div>
+          )}
 
           {/* Follow Button Overlay */}
           {showFollow && (
