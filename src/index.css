@@ -362,6 +362,15 @@
     @apply rounded-[1.75rem] border border-border/60 bg-card/85 backdrop-blur-xl;
     box-shadow: var(--shadow-float);
   }
+
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 @keyframes streak-flicker {
