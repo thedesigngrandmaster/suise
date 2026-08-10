@@ -1,74 +1,142 @@
-import { useState, useEffect } from "react";
+import { useMemo, useState } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { useAlbumsContext } from "@/contexts/AlbumsContext";
-import { Plus } from "lucide-react";
+import { Plus, Globe, Lock, FolderHeart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { UploadModal } from "@/components/UploadModal";
 import { AlbumCard } from "@/components/AlbumCard";
+import { TransferOwnershipDialog } from "@/components/TransferOwnershipDialog";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/hooks/useAuth";
+import { cn } from "@/lib/utils";
+
+type Filter = "all" | "private" | "public";
+
+const FILTERS: { id: Filter; label: string }[] = [
+  { id: "all", label: "All" },
+  { id: "private", label: "Private" },
+  { id: "public", label: "Public" },
+];
+
+const EMPTY_COPY: Record<Filter, { title: string; body: string }> = {
+  all: {
+    title: "No folders yet",
+    body: "Create your first folder and start keeping memories safe.",
+  },
+  private: {
+    title: "Nothing private yet",
+    body: "Private folders are visible only to you and the people you invite.",
+  },
+  public: {
+    title: "Nothing public yet",
+    body: "Make a folder public to share it on Explore and let others follow along.",
+  },
+};
 
 export default function Vault() {
-  const { user } = useAuth();
-  const { albums, loading, deleteAlbum } = useAlbumsContext();
+  const { albums, loading, refetch } = useAlbumsContext();
   const [uploadOpen, setUploadOpen] = useState(false);
+  const [filter, setFilter] = useState<Filter>("all");
+  const [transferAlbum, setTransferAlbum] = useState<{ id: string; title: string } | null>(null);
   const navigate = useNavigate();
 
-  // Debug logs
-  useEffect(() => {
-    console.log('Vault - user:', user);
-    console.log('Vault - albums:', albums);
-    console.log('Vault - loading:', loading);
-  }, [user, albums, loading]);
+  const counts = useMemo(
+    () => ({
+      all: albums.length,
+      private: albums.filter((a) => !a.is_public).length,
+      public: albums.filter((a) => a.is_public).length,
+    }),
+    [albums]
+  );
 
-  const handleNewAlbum = () => {
-    console.log("Opening upload modal");
-    setUploadOpen(true);
-  };
+  const visible = useMemo(() => {
+    if (filter === "private") return albums.filter((a) => !a.is_public);
+    if (filter === "public") return albums.filter((a) => a.is_public);
+    return albums;
+  }, [albums, filter]);
+
+  const empty = EMPTY_COPY[filter];
 
   return (
     <DashboardLayout activeTab="vault" onTabChange={(tab) => navigate(`/${tab === "home" ? "" : tab}`)}>
-      <div className="max-w-4xl mx-auto px-4 py-6">
-        <div className="flex items-center justify-between mb-6">
+      <div className="max-w-4xl mx-auto px-4 py-5 sm:py-6">
+        <div className="flex flex-wrap items-start justify-between gap-3 mb-5">
           <div>
             <h1 className="text-2xl font-bold font-bricolage">Your Vault</h1>
-            <p className="text-muted-foreground">Your private memories organized by albums</p>
+            <p className="text-sm text-muted-foreground">
+              Folders you own, private by default.
+            </p>
           </div>
-          <Button variant="suise" onClick={handleNewAlbum}>
+          <Button variant="suise" onClick={() => setUploadOpen(true)} className="shrink-0">
             <Plus className="w-4 h-4 mr-2" />
-            New Album
+            New folder
           </Button>
         </div>
 
+        {/* Visibility chips */}
+        <div
+          role="tablist"
+          aria-label="Filter folders by visibility"
+          className="flex items-center gap-2 mb-5 overflow-x-auto no-scrollbar -mx-1 px-1 pb-1"
+        >
+          {FILTERS.map((f) => {
+            const active = filter === f.id;
+            return (
+              <button
+                key={f.id}
+                role="tab"
+                aria-selected={active}
+                onClick={() => setFilter(f.id)}
+                className={cn(
+                  "shrink-0 inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-medium transition-all",
+                  active
+                    ? "bg-secondary text-secondary-foreground"
+                    : "bg-muted/70 text-muted-foreground hover:bg-muted"
+                )}
+              >
+                {f.id === "public" && <Globe className="w-3.5 h-3.5" />}
+                {f.id === "private" && <Lock className="w-3.5 h-3.5" />}
+                {f.label}
+                <span className={cn("tabular-nums", active ? "opacity-80" : "opacity-60")}>
+                  {counts[f.id]}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+
         {loading ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
             {[...Array(6)].map((_, i) => (
-              <div key={i} className="aspect-square bg-muted rounded-2xl animate-pulse" />
+              <div key={i} className="space-y-2">
+                <div className="aspect-square bg-muted rounded-3xl animate-pulse" />
+                <div className="h-3 w-2/3 bg-muted rounded-full animate-pulse" />
+              </div>
             ))}
           </div>
-        ) : albums.length === 0 ? (
-          <div className="text-center py-16">
-            <div className="w-24 h-24 mx-auto mb-4 bg-secondary/20 rounded-full flex items-center justify-center">
-              <Plus className="w-12 h-12 text-secondary" />
+        ) : visible.length === 0 ? (
+          <div className="soft-card text-center py-14 px-6">
+            <div className="w-20 h-20 mx-auto mb-4 bg-secondary/12 rounded-3xl flex items-center justify-center">
+              <FolderHeart className="w-9 h-9 text-secondary" />
             </div>
-            <h3 className="text-lg font-bold mb-2">No albums yet</h3>
-            <p className="text-muted-foreground mb-4">Create your first album to start saving memories</p>
-            <Button variant="suise" onClick={handleNewAlbum}>
-              Create Album
+            <h3 className="text-lg font-bold mb-1">{empty.title}</h3>
+            <p className="text-sm text-muted-foreground mb-5 max-w-xs mx-auto">{empty.body}</p>
+            <Button variant="suise" onClick={() => setUploadOpen(true)}>
+              Create a folder
             </Button>
           </div>
         ) : (
           <>
-            <p className="text-sm text-muted-foreground mb-4">
-              {albums.length} {albums.length === 1 ? 'album' : 'albums'}
+            <p className="text-sm text-muted-foreground mb-3">
+              {visible.length} {visible.length === 1 ? "folder" : "folders"}
             </p>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-              {albums.map((album) => (
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
+              {visible.map((album) => (
                 <AlbumCard
                   key={album.id}
                   album={album}
+                  showVisibility
                   onClick={() => navigate(`/album/${album.id}`)}
-                  onDelete={() => deleteAlbum(album.id)}
+                  onTransfer={() => setTransferAlbum({ id: album.id, title: album.title })}
                 />
               ))}
             </div>
@@ -76,14 +144,20 @@ export default function Vault() {
         )}
       </div>
 
-      <UploadModal 
-        key={uploadOpen ? 'open' : 'closed'}
-        isOpen={uploadOpen} 
-        onClose={() => {
-          console.log("Closing upload modal");
-          setUploadOpen(false);
-        }} 
+      <UploadModal
+        key={uploadOpen ? "open" : "closed"}
+        isOpen={uploadOpen}
+        onClose={() => setUploadOpen(false)}
       />
+
+      {transferAlbum && (
+        <TransferOwnershipDialog
+          open={!!transferAlbum}
+          onOpenChange={(open) => !open && setTransferAlbum(null)}
+          album={transferAlbum}
+          onTransferred={() => refetch?.()}
+        />
+      )}
     </DashboardLayout>
   );
 }
