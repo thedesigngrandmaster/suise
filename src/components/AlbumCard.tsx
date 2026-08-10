@@ -3,6 +3,7 @@ import { Album } from "@/hooks/useAlbums";
 import { useAlbumFollows } from "@/hooks/useAlbumFollows";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
 interface AlbumCardProps {
