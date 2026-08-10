@@ -415,6 +415,47 @@ export type Database = {
           },
         ]
       }
+      ownership_transfers: {
+        Row: {
+          album_id: string
+          created_at: string
+          from_user_id: string
+          id: string
+          note: string | null
+          status: string
+          to_user_id: string
+          tx_digest: string | null
+        }
+        Insert: {
+          album_id: string
+          created_at?: string
+          from_user_id: string
+          id?: string
+          note?: string | null
+          status?: string
+          to_user_id: string
+          tx_digest?: string | null
+        }
+        Update: {
+          album_id?: string
+          created_at?: string
+          from_user_id?: string
+          id?: string
+          note?: string | null
+          status?: string
+          to_user_id?: string
+          tx_digest?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ownership_transfers_album_id_fkey"
+            columns: ["album_id"]
+            isOneToOne: false
+            referencedRelation: "albums"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -469,6 +510,33 @@ export type Database = {
           updated_at?: string | null
           username?: string | null
           wallet_address?: string | null
+        }
+        Relationships: []
+      }
+      reward_events: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          kind: string
+          points: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          kind: string
+          points?: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          kind?: string
+          points?: number
+          user_id?: string
         }
         Relationships: []
       }
