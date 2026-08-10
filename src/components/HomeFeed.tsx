@@ -272,6 +272,13 @@ export function HomeFeed() {
       </div>
 
       <UploadModal isOpen={uploadOpen} onClose={() => setUploadOpen(false)} />
+      <WelcomeOnboarding
+        open={welcomeOpen}
+        onComplete={() => {
+          setWelcomeOpen(false);
+          setTutorialOpen(true);
+        }}
+      />
       <OnboardingTutorial 
         isOpen={tutorialOpen} 
         onClose={() => setTutorialOpen(false)}
