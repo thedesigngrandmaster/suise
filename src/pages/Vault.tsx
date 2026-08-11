@@ -58,7 +58,7 @@ export default function Vault() {
 
   return (
     <DashboardLayout activeTab="vault" onTabChange={(tab) => navigate(`/${tab === "home" ? "" : tab}`)}>
-      <div className="max-w-4xl mx-auto px-4 py-5 sm:py-6">
+      <div className="w-full max-w-[1180px] mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-7">
         <div className="flex flex-wrap items-start justify-between gap-3 mb-5">
           <div>
             <h1 className="text-2xl font-bold font-bricolage">Your Vault</h1>
@@ -105,7 +105,7 @@ export default function Vault() {
         </div>
 
         {loading ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
             {[...Array(6)].map((_, i) => (
               <div key={i} className="space-y-2">
                 <div className="aspect-square bg-muted rounded-3xl animate-pulse" />
@@ -129,7 +129,7 @@ export default function Vault() {
             <p className="text-sm text-muted-foreground mb-3">
               {visible.length} {visible.length === 1 ? "folder" : "folders"}
             </p>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
               {visible.map((album) => (
                 <AlbumCard
                   key={album.id}

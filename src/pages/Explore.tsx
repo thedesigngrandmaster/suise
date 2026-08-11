@@ -21,7 +21,9 @@ interface SearchResult {
 
 export default function Explore() {
   const { user } = useAuth();
-  const { fetchPublicAlbums, albums, loading } = useAlbums(user?.id);
+  // No userId: keeps this hook on the public feed only (passing a user id makes
+  // it refetch that user's own albums and overwrite the Explore results).
+  const { fetchPublicAlbums, albums, loading } = useAlbums();
   const { followedAlbums, loading: followsLoading } = useAlbumFollows(user?.id);
   const navigate = useNavigate();
   const [activeCategory, setActiveCategory] = useState("trending");
@@ -55,7 +57,7 @@ export default function Explore() {
         const username = searchQuery.slice(1).toLowerCase();
         const { data: users } = await supabase
           .from("profiles")
-          .select("id, username, display_name, avatar_url")
+          .select("id, username, display_name, avatar_url, is_verified")
           .ilike("username", `%${username}%`)
           .eq("is_public", true)
           .limit(10);
@@ -76,7 +78,7 @@ export default function Explore() {
         const [usersResponse, albumsResponse] = await Promise.all([
           supabase
             .from("profiles")
-            .select("id, username, display_name, avatar_url")
+            .select("id, username, display_name, avatar_url, is_verified")
             .or(`username.ilike.%${searchQuery}%,display_name.ilike.%${searchQuery}%`)
             .eq("is_public", true)
             .limit(5),
@@ -153,7 +155,7 @@ export default function Explore() {
 
   return (
     <DashboardLayout activeTab="explore" onTabChange={(tab) => navigate(`/${tab === "home" ? "" : tab}`)}>
-      <div className="max-w-5xl mx-auto px-5 py-8 sm:py-10">
+      <div className="w-full max-w-[1180px] mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
         <div className="mb-7">
           <h1 className="text-3xl font-bold font-bricolage tracking-tight">Explore</h1>
           <p className="text-muted-foreground mt-1">Discover memories shared by the community</p>
