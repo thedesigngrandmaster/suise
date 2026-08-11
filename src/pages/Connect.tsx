@@ -3,6 +3,7 @@ import { DashboardLayout } from "@/components/DashboardLayout";
 import { useAuth } from "@/hooks/useAuth";
 import { useConnections } from "@/hooks/useConnections";
 import { useNavigate } from "react-router-dom";
+import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { User, Check, X, Users, Search, MessageCircle } from "lucide-react";
@@ -16,6 +17,7 @@ interface UserProfile {
   id: string;
   username: string | null;
   display_name: string | null;
+  is_verified?: boolean | null;
   avatar_url: string | null;
   bio: string | null;
 }
@@ -55,7 +57,7 @@ export default function Connect() {
       setLoadingUsers(true);
       const { data, error } = await supabase
         .from("profiles")
-        .select("id, username, display_name, avatar_url, bio")
+        .select("id, username, display_name, avatar_url, bio, is_verified")
         .eq("is_public", true)
         .order("created_at", { ascending: false })
         .limit(50);
@@ -220,7 +222,10 @@ export default function Connect() {
                             onClick={() => navigate(`/${profile.username}`)}
                             className="text-left w-full"
                           >
-                            <p className="font-bold truncate">{profile.display_name || profile.username}</p>
+                            <p className="font-bold truncate flex items-center gap-1">
+                              <span className="truncate">{profile.display_name || profile.username}</span>
+                              {profile.is_verified && <VerifiedBadge />}
+                            </p>
                             <p className="text-sm text-muted-foreground truncate">{profile.username}</p>
                             {profile.bio && (
                               <p className="text-sm text-muted-foreground line-clamp-1 mt-1">{profile.bio}</p>
