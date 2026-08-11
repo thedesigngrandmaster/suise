@@ -1,4 +1,4 @@
-import { Heart, Eye, Users, BookmarkCheck, Bookmark, Globe, Lock, ArrowRightLeft } from "lucide-react";
+import { Heart, Eye, Users, BookmarkCheck, Bookmark, Globe, Lock, ArrowRightLeft, SlidersHorizontal } from "lucide-react";
 import { Album } from "@/hooks/useAlbums";
 import { useAlbumFollows } from "@/hooks/useAlbumFollows";
 import { useAuth } from "@/hooks/useAuth";
@@ -14,6 +14,7 @@ interface AlbumCardProps {
   onDelete?: () => void;
   showVisibility?: boolean;
   onTransfer?: () => void;
+  onManageAccess?: () => void;
 }
 
 export function AlbumCard({
@@ -23,6 +24,7 @@ export function AlbumCard({
   showFollowButton = false,
   showVisibility = false,
   onTransfer,
+  onManageAccess,
 }: AlbumCardProps) {
   const { user } = useAuth();
   const { isFollowing, followAlbum, unfollowAlbum } = useAlbumFollows(user?.id);
@@ -111,8 +113,23 @@ export function AlbumCard({
           </div>
 
           {/* Transfer ownership */}
-          {isOwner && onTransfer && (
-            <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
+          {isOwner && (onTransfer || onManageAccess) && (
+            <div className="absolute top-2 right-2 flex items-center gap-1.5 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
+              {onManageAccess && (
+                <Button
+                  size="icon"
+                  variant="secondary"
+                  aria-label={`Manage access for ${album.title}`}
+                  className="h-8 w-8 rounded-full shadow-lg"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onManageAccess();
+                  }}
+                >
+                  <SlidersHorizontal className="w-4 h-4" aria-hidden />
+                </Button>
+              )}
+              {onTransfer && (
               <Button
                 size="icon"
                 variant="secondary"
@@ -123,8 +140,9 @@ export function AlbumCard({
                   onTransfer();
                 }}
               >
-                <ArrowRightLeft className="w-4 h-4" />
+                <ArrowRightLeft className="w-4 h-4" aria-hidden />
               </Button>
+              )}
             </div>
           )}
 

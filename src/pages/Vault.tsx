@@ -6,6 +6,9 @@ import { Button } from "@/components/ui/button";
 import { UploadModal } from "@/components/UploadModal";
 import { AlbumCard } from "@/components/AlbumCard";
 import { TransferOwnershipDialog } from "@/components/TransferOwnershipDialog";
+import { AlbumPermissionsDialog } from "@/components/AlbumPermissionsDialog";
+import { TransferHistory } from "@/components/TransferHistory";
+import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
@@ -37,6 +40,8 @@ export default function Vault() {
   const [uploadOpen, setUploadOpen] = useState(false);
   const [filter, setFilter] = useState<Filter>("all");
   const [transferAlbum, setTransferAlbum] = useState<{ id: string; title: string } | null>(null);
+  const [accessAlbum, setAccessAlbum] = useState<{ id: string; title: string; owner_id: string; is_public?: boolean | null } | null>(null);
+  const { user } = useAuth();
   const navigate = useNavigate();
 
   const counts = useMemo(
@@ -137,11 +142,23 @@ export default function Vault() {
                   showVisibility
                   onClick={() => navigate(`/album/${album.id}`)}
                   onTransfer={() => setTransferAlbum({ id: album.id, title: album.title })}
+                  onManageAccess={() =>
+                    setAccessAlbum({
+                      id: album.id,
+                      title: album.title,
+                      owner_id: album.owner_id,
+                      is_public: album.is_public,
+                    })
+                  }
                 />
               ))}
             </div>
           </>
         )}
+        <section className="mt-10">
+          <h2 className="text-base sm:text-lg font-semibold mb-3">Handover history</h2>
+          <TransferHistory userId={user?.id} />
+        </section>
       </div>
 
       <UploadModal
@@ -149,6 +166,19 @@ export default function Vault() {
         isOpen={uploadOpen}
         onClose={() => setUploadOpen(false)}
       />
+
+      {accessAlbum && (
+        <AlbumPermissionsDialog
+          open={!!accessAlbum}
+          onOpenChange={(open) => !open && setAccessAlbum(null)}
+          album={accessAlbum}
+          isOwner={accessAlbum.owner_id === user?.id}
+          onUpdated={() => refetch?.()}
+          onTransfer={() =>
+            setTransferAlbum({ id: accessAlbum.id, title: accessAlbum.title })
+          }
+        />
+      )}
 
       {transferAlbum && (
         <TransferOwnershipDialog
