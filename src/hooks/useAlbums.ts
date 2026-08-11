@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { awardPoints } from "@/hooks/useRewards";
 
 export interface Album {
   id: string;
@@ -292,6 +293,7 @@ export function useAlbums(userId?: string) {
       return { error };
     }
     
+    await awardPoints(userId, "shared_folder", 40, "Invited a co-owner");
     toast.success("Co-owner added!");
     return { error: null };
   };

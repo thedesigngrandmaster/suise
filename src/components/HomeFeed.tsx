@@ -4,286 +4,267 @@ import { UploadModal } from "@/components/UploadModal";
 import { useAuth } from "@/hooks/useAuth";
 import { useAlbums, Album } from "@/hooks/useAlbums";
 import { useAlbumFollows } from "@/hooks/useAlbumFollows";
-import { YoomaAvatar } from "@/components/YoomaAvatar";
 import { StreakBadge } from "@/components/StreakBadge";
 import { AlbumCard } from "@/components/AlbumCard";
-import { OnboardingTutorial } from "@/components/OnboardingTutorial";
-import { WelcomeOnboarding } from "@/components/WelcomeOnboarding";
-import { BrandHeader } from "@/components/BrandHeader";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
-import { Sparkles, Bookmark } from "lucide-react";
+import { Sparkles, Bookmark, Plus, Flame, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+
+const TABS = [
+  { id: "for-you", label: "For you" },
+  { id: "following", label: "Following" },
+] as const;
+
+type TabId = (typeof TABS)[number]["id"];
 
 export function HomeFeed() {
   const { profile, user } = useAuth();
   const { albums } = useAlbums(user?.id);
   const { followedAlbums, loading: followsLoading } = useAlbumFollows(user?.id);
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<"for-you" | "following">("for-you");
+  const [activeTab, setActiveTab] = useState<TabId>("for-you");
   const [uploadOpen, setUploadOpen] = useState(false);
-  const [tutorialOpen, setTutorialOpen] = useState(false);
-  const [welcomeOpen, setWelcomeOpen] = useState(false);
   const [featuredAlbums, setFeaturedAlbums] = useState<Album[]>([]);
-  const [loadingFeatured, setLoadingFeatured] = useState(false);
+  const [loadingFeatured, setLoadingFeatured] = useState(true);
 
   const streakCount = profile?.streak_count || 0;
   const isNewUser = !profile?.last_streak_date;
+  const firstName =
+    (profile?.display_name || profile?.username || "there").split(" ")[0];
 
-  useEffect(() => {
-    if (isNewUser && user && !localStorage.getItem(`tutorial-shown-${user.id}`)) {
-      const timer = setTimeout(() => {
-        setWelcomeOpen(true);
-        localStorage.setItem(`tutorial-shown-${user.id}`, "true");
-      }, 1000);
-      return () => clearTimeout(timer);
-    }
-  }, [isNewUser, user]);
-
-  // Fetch featured albums for "For You"
   useEffect(() => {
     const fetchFeatured = async () => {
       setLoadingFeatured(true);
-      
-      console.log('Fetching featured albums...');
-      
       const { data, error } = await supabase
         .from("albums")
-        .select(`
-          *,
-          owner:profiles!albums_owner_id_fkey(id, username, display_name, avatar_url, wallet_address),
-          memories(image_url, display_order)
-        `)
+        .select(
+          `*, owner:profiles!albums_owner_id_fkey(id, username, display_name, avatar_url, wallet_address), memories(image_url, display_order)`
+        )
         .eq("is_public", true)
-        .order("love_count", { ascending: false })
+        .order("created_at", { ascending: false })
         .limit(12);
 
-      if (error) {
-        console.error('Error fetching featured albums:', error);
-      }
-
       if (!error && data) {
-        console.log('Featured albums raw data:', data);
-        
-        const processed = data.map(album => {
-          const sortedMemories = album.memories?.sort((a: any, b: any) => 
-            (a.display_order || 0) - (b.display_order || 0)
-          );
-          
-          const firstMemoryUrl = sortedMemories?.[0]?.image_url || null;
-          const coverImage = album.cover_image_url || firstMemoryUrl;
-          
-          console.log('Processing featured album:', {
-            id: album.id,
-            title: album.title,
-            cover_image_url: album.cover_image_url,
-            firstMemoryUrl: firstMemoryUrl,
-            finalCoverImage: coverImage
-          });
-          
-          return {
-            ...album,
-            cover_image_url: coverImage,
-            first_memory_url: firstMemoryUrl,
-            memories: undefined,
-          };
-        });
-        
-        console.log('Processed featured albums:', processed);
-        setFeaturedAlbums(processed as Album[]);
+        setFeaturedAlbums(
+          data.map((album: any) => {
+            const sorted = album.memories?.sort(
+              (a: any, b: any) => (a.display_order || 0) - (b.display_order || 0)
+            );
+            const first = sorted?.[0]?.image_url || null;
+            return {
+              ...album,
+              cover_image_url: album.cover_image_url || first,
+              first_memory_url: first,
+              memories: undefined,
+            };
+          }) as Album[]
+        );
       }
-      
       setLoadingFeatured(false);
     };
 
     fetchFeatured();
   }, []);
 
-  const getStreakMessage = () => {
-    if (isNewUser) {
-      return "Welcome! Start your journey by adding your first memory.";
-    }
-    if (streakCount === 0) {
-      return "Add a memory today to start your streak!";
-    }
-    if (streakCount === 1) {
-      return "You're on a 1-day streak. Keep going!";
-    }
-    if (streakCount < 7) {
-      return `You're on a ${streakCount}-day streak. Nice work!`;
-    }
-    if (streakCount < 30) {
-      return `Amazing! ${streakCount} days and counting! 🔥`;
-    }
-    return `Legendary ${streakCount}-day streak! You're unstoppable! 🏆`;
-  };
+  const streakMessage = isNewUser
+    ? "Start your first memory"
+    : streakCount === 0
+    ? "Add a memory today to restart your streak"
+    : `${streakCount}-day streak · keep it going`;
+
+  const streakSub = isNewUser
+    ? "Create a folder and keep your first photo safe."
+    : "One photo a day keeps your streak alive.";
 
   return (
     <DashboardLayout
       activeTab="home"
       onTabChange={(tab) => navigate(`/${tab === "home" ? "" : tab}`)}
     >
-      <div className="max-w-2xl mx-auto px-4 py-6">
-        {/* Brand + streak */}
-        <div className="hidden lg:flex items-center justify-between mb-6">
-          <BrandHeader />
+      <div className="w-full max-w-[1180px] mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-7">
+        {/* Header */}
+        <header className="flex items-start justify-between gap-4 mb-6">
+          <div className="min-w-0">
+            <p className="text-sm text-muted-foreground">Welcome back</p>
+            <h1 className="text-2xl sm:text-3xl font-bold font-bricolage tracking-tight truncate">
+              {firstName}
+            </h1>
+          </div>
           <StreakBadge count={streakCount} size="md" />
-        </div>
+        </header>
+
+        {/* Streak / add-memory bar */}
+        <section
+          aria-label="Daily contribution"
+          className="soft-card soft-lift mb-6 overflow-hidden"
+        >
+          <button
+            onClick={() => setUploadOpen(true)}
+            className="w-full flex items-center gap-4 p-4 sm:p-5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-3xl"
+          >
+            <span
+              aria-hidden
+              className="w-12 h-12 sm:w-14 sm:h-14 shrink-0 rounded-2xl bg-secondary/12 flex items-center justify-center"
+            >
+              <Flame
+                className={cn(
+                  "w-6 h-6 sm:w-7 sm:h-7 text-secondary",
+                  streakCount > 0 && "streak-flicker"
+                )}
+                fill={streakCount > 0 ? "currentColor" : "none"}
+              />
+            </span>
+            <span className="flex-1 min-w-0">
+              <span className="block font-semibold text-base sm:text-lg truncate">
+                {streakMessage}
+              </span>
+              <span className="block text-sm text-muted-foreground truncate">
+                {streakSub}
+              </span>
+            </span>
+            <span
+              aria-hidden
+              className="shrink-0 w-10 h-10 rounded-full bg-secondary text-secondary-foreground flex items-center justify-center"
+            >
+              <Plus className="w-5 h-5" />
+            </span>
+            <span className="sr-only">Add today's memory</span>
+          </button>
+        </section>
 
         {/* Tabs */}
-        <div className="flex items-center justify-center gap-8 mb-6 border-b border-border">
-          <button
-            onClick={() => setActiveTab("for-you")}
-            className={cn(
-              "pb-3 font-bold transition-colors relative",
-              activeTab === "for-you"
-                ? "text-foreground"
-                : "text-muted-foreground hover:text-foreground"
-            )}
-          >
-            For You
-            {activeTab === "for-you" && (
-              <div className="absolute bottom-0 left-0 right-0 h-1 bg-secondary rounded-full" />
-            )}
-          </button>
-          <button
-            onClick={() => setActiveTab("following")}
-            className={cn(
-              "pb-3 font-bold transition-colors relative",
-              activeTab === "following"
-                ? "text-foreground"
-                : "text-muted-foreground hover:text-foreground"
-            )}
-          >
-            Following
-            {activeTab === "following" && (
-              <div className="absolute bottom-0 left-0 right-0 h-1 bg-secondary rounded-full" />
-            )}
-          </button>
-        </div>
-
-        {/* Mobile streak badge */}
-        <div className="lg:hidden flex justify-end mb-4">
-          <StreakBadge count={streakCount} />
-        </div>
-
-        {/* Upload CTA Card */}
-        <button
-          onClick={() => setUploadOpen(true)}
-          className="w-full mb-6 p-6 bg-gradient-to-br from-primary/20 to-secondary/20 rounded-2xl text-left hover:from-primary/30 hover:to-secondary/30 transition-colors"
+        <div
+          role="tablist"
+          aria-label="Feed"
+          className="inline-flex items-center gap-1 p-1 rounded-full bg-muted/70 mb-6"
         >
-          <div className="flex items-center gap-4">
-            <YoomaAvatar variant={streakCount > 0 ? "celebrate" : "wave"} size="md" animate />
-            <div className="flex-1">
-              <p className="font-bold text-lg">{getStreakMessage()}</p>
-              <p className="text-muted-foreground">
-                {isNewUser ? "Click here to add your first memory!" : "Tap to add today's memory"}
-              </p>
-            </div>
-          </div>
-        </button>
+          {TABS.map((tab) => {
+            const active = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                role="tab"
+                aria-selected={active}
+                onClick={() => setActiveTab(tab.id)}
+                className={cn(
+                  "px-5 py-2 rounded-full text-sm font-medium transition-all",
+                  active
+                    ? "bg-background text-foreground shadow-[var(--shadow-soft)]"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                {tab.label}
+              </button>
+            );
+          })}
+        </div>
 
-        {/* User's Albums */}
+        {/* Your albums */}
         {albums.length > 0 && (
-          <div className="mb-8">
-            <h2 className="text-lg font-bold mb-4">Your Recent Albums</h2>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-              {albums.slice(0, 6).map((album) => (
+          <section className="mb-8">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-base sm:text-lg font-semibold">Your folders</h2>
+              <button
+                onClick={() => navigate("/vault")}
+                className="text-sm text-secondary font-medium inline-flex items-center gap-1 hover:underline"
+              >
+                Vault <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
+              {albums.slice(0, 5).map((album) => (
                 <AlbumCard
                   key={album.id}
                   album={album}
+                  showVisibility
                   onClick={() => navigate(`/album/${album.id}`)}
                 />
               ))}
             </div>
-          </div>
+          </section>
         )}
 
-        {/* For You Tab - Featured albums */}
         {activeTab === "for-you" && (
-          <div>
-            <h2 className="text-lg font-bold mb-4">Featured Albums</h2>
+          <section>
+            <h2 className="text-base sm:text-lg font-semibold mb-3">
+              Fresh from the community
+            </h2>
             {loadingFeatured ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                {[...Array(6)].map((_, i) => (
-                  <div key={i} className="aspect-square bg-muted rounded-2xl animate-pulse" />
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
+                {[...Array(10)].map((_, i) => (
+                  <div
+                    key={i}
+                    className="aspect-square bg-muted rounded-3xl animate-pulse"
+                  />
                 ))}
               </div>
             ) : featuredAlbums.length > 0 ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
                 {featuredAlbums.map((album) => (
                   <AlbumCard
                     key={album.id}
                     album={album}
                     onClick={() => navigate(`/album/${album.id}`)}
-                    showOwner={true}
+                    showOwner
                   />
                 ))}
               </div>
             ) : (
-              <div className="text-center py-12">
-                <Sparkles className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
-                <h3 className="text-lg font-bold mb-2">No albums yet</h3>
-                <p className="text-muted-foreground">Be the first to share your memories!</p>
+              <div className="soft-card text-center py-12 px-6">
+                <Sparkles className="w-10 h-10 mx-auto mb-3 text-secondary" />
+                <h3 className="font-semibold mb-1">Nothing here yet</h3>
+                <p className="text-sm text-muted-foreground">
+                  Be the first to share a public folder.
+                </p>
               </div>
             )}
-          </div>
+          </section>
         )}
 
-        {/* Following Tab - Albums user is following */}
         {activeTab === "following" && (
-          <div>
+          <section>
+            <h2 className="text-base sm:text-lg font-semibold mb-3">
+              Folders you follow
+            </h2>
             {followsLoading ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                {[...Array(6)].map((_, i) => (
-                  <div key={i} className="aspect-square bg-muted rounded-2xl animate-pulse" />
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
+                {[...Array(5)].map((_, i) => (
+                  <div
+                    key={i}
+                    className="aspect-square bg-muted rounded-3xl animate-pulse"
+                  />
                 ))}
               </div>
             ) : followedAlbums.length > 0 ? (
-              <>
-                <h2 className="text-lg font-bold mb-4">Albums You Follow</h2>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                  {followedAlbums.map((album) => (
-                    <AlbumCard
-                      key={album.id}
-                      album={album}
-                      onClick={() => navigate(`/album/${album.id}`)}
-                      showOwner={true}
-                    />
-                  ))}
-                </div>
-              </>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
+                {followedAlbums.map((album) => (
+                  <AlbumCard
+                    key={album.id}
+                    album={album}
+                    onClick={() => navigate(`/album/${album.id}`)}
+                    showOwner
+                  />
+                ))}
+              </div>
             ) : (
-              <div className="text-center py-12">
-                <Bookmark className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
-                <h3 className="text-lg font-bold mb-2">No followed albums yet</h3>
-                <p className="text-muted-foreground mb-4">
-                  Follow albums to see them here!
+              <div className="soft-card text-center py-12 px-6">
+                <Bookmark className="w-10 h-10 mx-auto mb-3 text-secondary" />
+                <h3 className="font-semibold mb-1">No follows yet</h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Follow folders on Explore to see their updates here.
                 </p>
                 <Button variant="suise" onClick={() => navigate("/explore")}>
-                  <Sparkles className="w-4 h-4 mr-2" />
-                  Explore Albums
+                  Explore folders
                 </Button>
               </div>
             )}
-          </div>
+          </section>
         )}
       </div>
 
       <UploadModal isOpen={uploadOpen} onClose={() => setUploadOpen(false)} />
-      <WelcomeOnboarding
-        open={welcomeOpen}
-        onComplete={() => {
-          setWelcomeOpen(false);
-          setTutorialOpen(true);
-        }}
-      />
-      <OnboardingTutorial 
-        isOpen={tutorialOpen} 
-        onClose={() => setTutorialOpen(false)}
-        onStartUpload={() => setUploadOpen(true)}
-      />
     </DashboardLayout>
   );
 }

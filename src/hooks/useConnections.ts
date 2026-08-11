@@ -100,6 +100,8 @@ export function useConnections(userId?: string) {
       }
 
       toast.success("Connection request sent!");
+      // Community accounts respond on their own.
+      supabase.functions.invoke("bot-activity").catch(() => {});
       await fetchSentRequests();
       return { data, error: null };
     } catch (error) {

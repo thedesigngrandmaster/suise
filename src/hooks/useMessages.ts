@@ -136,6 +136,10 @@ export function useMessages(userId?: string) {
       return { error };
     }
 
+    // Community accounts reply on their own.
+    supabase.functions.invoke("bot-activity").catch(() => {});
+    setTimeout(() => fetchConversation(receiverId), 1500);
+
     await fetchConversation(receiverId);
     return { error: null };
   };

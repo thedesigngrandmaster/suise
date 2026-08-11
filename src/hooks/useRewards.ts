@@ -16,6 +16,39 @@ export const REWARD_RULES = [
   { kind: "handover", label: "Complete a handover", points: 60, hint: "Pass a folder on safely" },
 ];
 
+/**
+ * Records a reward for a user from anywhere in the app (hooks, dialogs, flows).
+ * `oncePerDay` prevents duplicate daily bonuses such as the streak reward.
+ */
+export async function awardPoints(
+  userId: string | undefined,
+  kind: string,
+  points: number,
+  description?: string,
+  options?: { oncePerDay?: boolean }
+) {
+  if (!userId) return;
+
+  if (options?.oncePerDay) {
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+    const { data: existing } = await supabase
+      .from("reward_events")
+      .select("id")
+      .eq("user_id", userId)
+      .eq("kind", kind)
+      .gte("created_at", startOfDay.toISOString())
+      .limit(1);
+    if (existing && existing.length > 0) return;
+  }
+
+  const { error } = await supabase
+    .from("reward_events")
+    .insert({ user_id: userId, kind, points, description: description ?? null });
+
+  if (error) console.error("Failed to award points", error);
+}
+
 export function useRewards(userId?: string) {
   const [events, setEvents] = useState<RewardEvent[]>([]);
   const [loading, setLoading] = useState(true);
@@ -44,14 +77,7 @@ export function useRewards(userId?: string) {
 
   const award = useCallback(
     async (kind: string, points: number, description?: string) => {
-      if (!userId) return;
-      const { error } = await supabase
-        .from("reward_events")
-        .insert({ user_id: userId, kind, points, description: description ?? null });
-      if (error) {
-        console.error("Failed to award points", error);
-        return;
-      }
+      await awardPoints(userId, kind, points, description);
       fetchEvents();
     },
     [userId, fetchEvents]

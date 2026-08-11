@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { awardPoints } from "@/hooks/useRewards";
 import { useAuth } from "./useAuth";
 
 export interface Memory {
@@ -142,6 +143,12 @@ export function useMemories(albumId?: string) {
           console.log("Album cover updated successfully");
         }
       }
+
+      // Contribution rewards
+      await awardPoints(user.id, "memory", 10, "Added a memory");
+      await awardPoints(user.id, "streak", 25, "Daily contribution bonus", {
+        oncePerDay: true,
+      });
 
       // Update streak
       try {

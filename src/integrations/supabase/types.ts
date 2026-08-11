@@ -467,6 +467,7 @@ export type Database = {
           id: string
           is_bot: boolean | null
           is_public: boolean | null
+          is_verified: boolean
           last_streak_date: string | null
           show_email: boolean | null
           show_wallet: boolean | null
@@ -485,6 +486,7 @@ export type Database = {
           id: string
           is_bot?: boolean | null
           is_public?: boolean | null
+          is_verified?: boolean
           last_streak_date?: string | null
           show_email?: boolean | null
           show_wallet?: boolean | null
@@ -503,6 +505,7 @@ export type Database = {
           id?: string
           is_bot?: boolean | null
           is_public?: boolean | null
+          is_verified?: boolean
           last_streak_date?: string | null
           show_email?: boolean | null
           show_wallet?: boolean | null
@@ -587,6 +590,7 @@ export type Database = {
           email: string
           id: string
           is_public: boolean
+          is_verified: boolean
           show_email: boolean
           show_wallet: boolean
           streak_count: number

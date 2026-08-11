@@ -5,46 +5,46 @@
 @layer base {
   :root {
     /* Suise Brand Colors */
-    --suise-yellow: 55 100% 71%;
-    --suise-purple: 258 87% 70%;
-    --suise-teal: 172 85% 69%;
-    --suise-charcoal: 0 0% 10%;
-    --suise-offwhite: 220 20% 99%;
+    --suise-yellow: 258 87% 71%;
+    --suise-purple: 258 87% 71%;
+    --suise-teal: 194 62% 60%;
+    --suise-charcoal: 222 38% 9%;
+    --suise-offwhite: 0 0% 99%;
     
-    --background: 220 20% 99%;
-    --foreground: 0 0% 10%;
+    --background: 0 0% 99%;
+    --foreground: 222 38% 9%;
 
     --card: 0 0% 100%;
-    --card-foreground: 0 0% 10%;
+    --card-foreground: 222 38% 9%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 10%;
+    --popover-foreground: 222 38% 9%;
 
-    --primary: 55 100% 71%;
-    --primary-foreground: 0 0% 10%;
+    --primary: 258 87% 71%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 258 87% 70%;
+    --secondary: 258 87% 71%;
     --secondary-foreground: 0 0% 100%;
 
     --muted: 220 14% 96%;
     --muted-foreground: 220 9% 46%;
 
-    --accent: 172 85% 69%;
-    --accent-foreground: 0 0% 10%;
+    --accent: 194 62% 60%;
+    --accent-foreground: 222 38% 9%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
 
     --border: 220 13% 91%;
     --input: 220 13% 91%;
-    --ring: 55 100% 71%;
+    --ring: 258 87% 71%;
 
     --radius: 1rem;
 
     /* Gradients */
-    --gradient-yooma: linear-gradient(135deg, hsl(55 100% 71%) 0%, hsl(258 87% 70%) 50%, hsl(172 85% 69%) 100%);
+    --gradient-yooma: linear-gradient(135deg, hsl(258 87% 78%) 0%, hsl(258 87% 71%) 50%, hsl(194 62% 60%) 100%);
     --gradient-card: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(220 20% 98%) 100%);
-    --gradient-streak: linear-gradient(135deg, hsl(55 100% 71%) 0%, hsl(45 100% 60%) 100%);
+    --gradient-streak: linear-gradient(135deg, hsl(258 87% 74%) 0%, hsl(194 62% 60%) 100%);
     --gradient-soft: radial-gradient(120% 120% at 20% 10%, hsl(258 87% 92%) 0%, hsl(258 60% 97%) 45%, hsl(220 20% 99%) 100%);
     --gradient-orb: radial-gradient(circle at 35% 30%, hsl(258 90% 88%) 0%, hsl(266 80% 78%) 40%, hsl(172 70% 82%) 100%);
 
@@ -56,13 +56,13 @@
     --shadow-button-pressed: 0 1px 2px hsl(258 40% 25% / 0.08);
 
     --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 0 0% 10%;
-    --sidebar-primary: 55 100% 71%;
-    --sidebar-primary-foreground: 0 0% 10%;
-    --sidebar-accent: 258 87% 70%;
+    --sidebar-foreground: 222 38% 9%;
+    --sidebar-primary: 258 87% 71%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 258 87% 71%;
     --sidebar-accent-foreground: 0 0% 100%;
     --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 55 100% 71%;
+    --sidebar-ring: 258 87% 71%;
   }
 
   .dark {
@@ -75,33 +75,33 @@
     --popover: 222 47% 11%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 55 100% 71%;
-    --primary-foreground: 0 0% 10%;
+    --primary: 258 87% 71%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 258 87% 70%;
+    --secondary: 258 87% 71%;
     --secondary-foreground: 0 0% 100%;
 
     --muted: 217 33% 17%;
     --muted-foreground: 215 20% 65%;
 
-    --accent: 172 85% 69%;
-    --accent-foreground: 0 0% 10%;
+    --accent: 194 62% 60%;
+    --accent-foreground: 222 38% 9%;
 
     --destructive: 0 62% 30%;
     --destructive-foreground: 210 40% 98%;
 
     --border: 217 33% 17%;
     --input: 217 33% 17%;
-    --ring: 55 100% 71%;
+    --ring: 258 87% 71%;
 
     --sidebar-background: 222 47% 8%;
     --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 55 100% 71%;
-    --sidebar-primary-foreground: 0 0% 10%;
-    --sidebar-accent: 258 87% 70%;
+    --sidebar-primary: 258 87% 71%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 258 87% 71%;
     --sidebar-accent-foreground: 0 0% 100%;
     --sidebar-border: 217 33% 17%;
-    --sidebar-ring: 55 100% 71%;
+    --sidebar-ring: 258 87% 71%;
   }
 
   .dim {
@@ -114,33 +114,33 @@
     --popover: 220 20% 18%;
     --popover-foreground: 210 40% 92%;
 
-    --primary: 55 100% 71%;
-    --primary-foreground: 0 0% 10%;
+    --primary: 258 87% 71%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 258 87% 70%;
+    --secondary: 258 87% 71%;
     --secondary-foreground: 0 0% 100%;
 
     --muted: 220 20% 24%;
     --muted-foreground: 215 20% 60%;
 
-    --accent: 172 85% 69%;
-    --accent-foreground: 0 0% 10%;
+    --accent: 194 62% 60%;
+    --accent-foreground: 222 38% 9%;
 
     --destructive: 0 70% 45%;
     --destructive-foreground: 210 40% 98%;
 
     --border: 220 20% 26%;
     --input: 220 20% 24%;
-    --ring: 55 100% 71%;
+    --ring: 258 87% 71%;
 
     --sidebar-background: 220 20% 14%;
     --sidebar-foreground: 210 40% 92%;
-    --sidebar-primary: 55 100% 71%;
-    --sidebar-primary-foreground: 0 0% 10%;
-    --sidebar-accent: 258 87% 70%;
+    --sidebar-primary: 258 87% 71%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 258 87% 71%;
     --sidebar-accent-foreground: 0 0% 100%;
     --sidebar-border: 220 20% 26%;
-    --sidebar-ring: 55 100% 71%;
+    --sidebar-ring: 258 87% 71%;
   }
 
   /* Sunset Theme */

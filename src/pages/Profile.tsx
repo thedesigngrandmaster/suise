@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
@@ -25,6 +26,7 @@ interface ProfileData {
   id: string;
   username: string | null;
   display_name: string | null;
+  is_verified?: boolean | null;
   email: string | null;
   avatar_url: string | null;
   cover_photo_url: string | null;
@@ -314,7 +316,10 @@ export default function Profile() {
               <>
                 <div className="flex items-center gap-3 justify-center sm:justify-start">
                   <h1 className="text-2xl font-bold font-bricolage text-secondary">
-                    {profileData.display_name || profileData.username}
+                    <span className="inline-flex items-center gap-1.5">
+                      {profileData.display_name || profileData.username}
+                      {profileData.is_verified && <VerifiedBadge size="md" />}
+                    </span>
                   </h1>
                   <StreakBadge count={profileData.streak_count} />
                 </div>
