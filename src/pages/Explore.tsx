@@ -241,7 +241,7 @@ export default function Explore() {
         </div>
 
         {isLoading ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
             {[...Array(9)].map((_, i) => (
               <div key={i} className="aspect-square bg-muted rounded-2xl animate-pulse" />
             ))}
@@ -251,7 +251,7 @@ export default function Explore() {
             <p className="text-sm text-muted-foreground mb-4">
               {displayAlbums.length} {displayAlbums.length === 1 ? 'album' : 'albums'}
             </p>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
               {displayAlbums.map((album) => (
                 <AlbumCard
                   key={album.id}
