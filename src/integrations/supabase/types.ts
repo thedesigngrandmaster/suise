@@ -518,6 +518,7 @@ export type Database = {
       }
       reward_events: {
         Row: {
+          action_key: string | null
           created_at: string
           description: string | null
           id: string
@@ -526,6 +527,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          action_key?: string | null
           created_at?: string
           description?: string | null
           id?: string
@@ -534,6 +536,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          action_key?: string | null
           created_at?: string
           description?: string | null
           id?: string
