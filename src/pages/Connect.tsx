@@ -26,9 +26,11 @@ export default function Connect() {
   const { user } = useAuth();
   const { 
     connections, 
-    pendingRequests, 
+    pendingRequests,
+    sentRequests,
     acceptRequest, 
-    rejectRequest, 
+    rejectRequest,
+    cancelRequest,
     loading, 
     sendRequest, 
     hasSentRequest, 
@@ -111,6 +113,12 @@ export default function Connect() {
   const handleRejectRequest = async (connectionId: string) => {
     setProcessingRequest(connectionId);
     await rejectRequest(connectionId);
+    setProcessingRequest(null);
+  };
+
+  const handleCancelRequest = async (connectionId: string) => {
+    setProcessingRequest(connectionId);
+    await cancelRequest(connectionId);
     setProcessingRequest(null);
   };
 
@@ -238,8 +246,17 @@ export default function Connect() {
                             Connected
                           </Button>
                         ) : status === "sent" ? (
-                          <Button size="sm" variant="outline" disabled>
-                            Request Sent
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              const req = sentRequests.find((r) => r.addressee_id === profile.id);
+                              if (req) handleCancelRequest(req.id);
+                            }}
+                            disabled={isProcessing}
+                            aria-label={`Cancel connection request to ${profile.display_name || profile.username}`}
+                          >
+                            {isProcessing ? "..." : "Cancel request"}
                           </Button>
                         ) : status === "pending" ? (
                           <Button 
