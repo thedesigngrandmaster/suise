@@ -152,7 +152,7 @@ export function DashboardLayout({ children, activeTab, onTabChange }: DashboardL
               >
                 <Bell className="w-5 h-5" />
                 {unreadCount > 0 && (
-                  <span className="absolute -bottom-1 -right-1 min-w-5 h-5 px-1 bg-secondary text-secondary-foreground text-xs rounded-full flex items-center justify-center font-bold">
+                  <span className="absolute -top-1 -right-1 min-w-5 h-5 px-1 bg-secondary text-secondary-foreground text-xs rounded-full flex items-center justify-center font-bold">
                     {unreadCount > 9 ? "9+" : unreadCount}
                   </span>
                 )}
@@ -203,11 +203,14 @@ function DesktopNavItem({ item, isActive, collapsed, onClick, badge }: DesktopNa
   return (
     <li className="relative">
       <button
+        type="button"
         onClick={onClick}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
+        aria-current={isActive ? "page" : undefined}
+        aria-label={item.label + (badge && badge > 0 ? `, ${badge} unread` : "")}
         className={cn(
-          "w-full flex items-center gap-4 px-4 py-3 rounded-2xl transition-all duration-200 group",
+          "w-full flex items-center gap-4 px-4 py-3 rounded-2xl transition-all duration-200 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary focus-visible:ring-offset-2",
           isActive
             ? "bg-secondary/12 font-semibold"
             : "hover:bg-muted/60"
@@ -224,7 +227,7 @@ function DesktopNavItem({ item, isActive, collapsed, onClick, badge }: DesktopNa
             )}
           />
           {badge && badge > 0 && (
-            <span className="absolute -bottom-1 -right-1 min-w-5 h-5 px-1 bg-secondary text-secondary-foreground text-xs rounded-full flex items-center justify-center font-bold">
+            <span className="absolute -top-1 -right-1 min-w-5 h-5 px-1 bg-secondary text-secondary-foreground text-xs rounded-full flex items-center justify-center font-bold">
               {badge > 9 ? "9+" : badge}
             </span>
           )}
