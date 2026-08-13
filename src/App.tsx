@@ -18,6 +18,7 @@ import Earn from "./pages/Earn";
 import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
 import { ProtectedRoute } from "./components/ProtectedRoute";
+import { UsernameRoute } from "./components/UsernameRoute";
 
 const App = () => (
   <Routes>
@@ -128,7 +129,7 @@ const App = () => (
     />
 
     {/* Public profile by username — keep after static routes */}
-    <Route path="/:username" element={<Profile />} />
+    <Route path="/:username" element={<UsernameRoute />} />
     <Route path="*" element={<NotFound />} />
   </Routes>
 );
