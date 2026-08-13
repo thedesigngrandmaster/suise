@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,8 @@ type AuthMode = "login" | "signup" | "forgot-password" | "reset-password";
 
 export default function Auth() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const from = (location.state as { from?: string } | null)?.from || "/";
   const { signInWithEmail, signUpWithEmail, signInWithGoogle } = useAuth();
   
   const [mode, setMode] = useState<AuthMode>("login");
@@ -61,12 +63,12 @@ export default function Auth() {
       if (mode === "login") {
         const { error } = await signInWithEmail(email, password);
         if (!error) {
-          navigate("/");
+          navigate(from, { replace: true });
         }
       } else if (mode === "signup") {
         const { error } = await signUpWithEmail(email, password, displayName);
         if (!error) {
-          navigate("/");
+          navigate(from, { replace: true });
         }
       } else if (mode === "forgot-password") {
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
@@ -84,7 +86,7 @@ export default function Auth() {
           toast.error("Failed to reset password", { description: error.message });
         } else {
           toast.success("Password updated!", { description: "You can now sign in with your new password." });
-          navigate("/");
+          navigate(from, { replace: true });
         }
       }
     } finally {
