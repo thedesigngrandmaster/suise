@@ -141,6 +141,30 @@ export function useConnections(userId?: string) {
     return { error };
   };
 
+  /** Withdraw a pending request you sent. Deletes the row so the other person no longer sees it. */
+  const cancelRequest = async (connectionId: string) => {
+    if (!userId) {
+      toast.error("Not authenticated");
+      return { error: new Error("Not authenticated") };
+    }
+
+    const { error } = await supabase
+      .from("connections")
+      .delete()
+      .eq("id", connectionId)
+      .eq("requester_id", userId)
+      .eq("status", "pending");
+
+    if (error) {
+      toast.error("Could not cancel request");
+      return { error };
+    }
+
+    toast.success("Request cancelled");
+    await fetchSentRequests();
+    return { error: null };
+  };
+
   useEffect(() => {
     fetchConnections();
     fetchPendingRequests();
@@ -165,6 +189,7 @@ export function useConnections(userId?: string) {
     sendRequest,
     acceptRequest,
     rejectRequest,
+    cancelRequest,
     hasSentRequest,
     isConnected,
     refetch: fetchConnections,
