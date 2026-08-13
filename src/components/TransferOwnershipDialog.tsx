@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Dialog,
   DialogContent,
@@ -47,15 +47,18 @@ export function TransferOwnershipDialog({
   const [step, setStep] = useState<1 | 2>(1);
   const [username, setUsername] = useState("");
   const [searching, setSearching] = useState(false);
+  const [searchResults, setSearchResults] = useState<Recipient[]>([]);
   const [recipient, setRecipient] = useState<Recipient | null>(null);
   const [confirmText, setConfirmText] = useState("");
   const [understood, setUnderstood] = useState(false);
   const [sealOnChain, setSealOnChain] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const reset = () => {
     setStep(1);
     setUsername("");
+    setSearchResults([]);
     setRecipient(null);
     setConfirmText("");
     setUnderstood(false);
@@ -68,9 +71,53 @@ export function TransferOwnershipDialog({
     onOpenChange(next);
   };
 
+  // Live username search while typing (debounced)
+  useEffect(() => {
+    if (searchTimer.current) clearTimeout(searchTimer.current);
+    const handle = username.trim().replace(/^@/, "");
+    if (!handle || handle.length < 1) {
+      setSearchResults([]);
+      setSearching(false);
+      return;
+    }
+    setSearching(true);
+    searchTimer.current = setTimeout(async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, username, display_name, avatar_url, wallet_address")
+        .or(`username.ilike.%${handle}%,display_name.ilike.%${handle}%`)
+        .neq("id", user?.id ?? "")
+        .limit(8);
+      setSearching(false);
+      if (error) {
+        console.error(error);
+        setSearchResults([]);
+        return;
+      }
+      setSearchResults((data as Recipient[]) ?? []);
+    }, 280);
+    return () => {
+      if (searchTimer.current) clearTimeout(searchTimer.current);
+    };
+  }, [username, user?.id]);
+
+  const selectRecipient = (person: Recipient) => {
+    setRecipient(person);
+    setUsername(person.username ? `@${person.username}` : person.display_name || "");
+    setSearchResults([]);
+    setStep(2);
+  };
+
   const findRecipient = async () => {
     const handle = username.trim().replace(/^@/, "");
     if (!handle) return;
+    const exact = searchResults.find(
+      (r) => r.username?.toLowerCase() === handle.toLowerCase()
+    );
+    if (exact) {
+      selectRecipient(exact);
+      return;
+    }
     setSearching(true);
     const { data, error } = await supabase.rpc("get_profile_by_username", {
       p_username: handle,
@@ -86,8 +133,7 @@ export function TransferOwnershipDialog({
       toast.error("You already own this folder");
       return;
     }
-    setRecipient(found as Recipient);
-    setStep(2);
+    selectRecipient(found as Recipient);
   };
 
   const canConfirm =
@@ -163,15 +209,63 @@ export function TransferOwnershipDialog({
         {step === 1 ? (
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="handover-username">Their username</Label>
+              <Label htmlFor="handover-username">Find the new owner</Label>
               <Input
                 id="handover-username"
-                placeholder="@username"
+                placeholder="Search by username or name"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && findRecipient()}
                 autoComplete="off"
+                aria-autocomplete="list"
+                aria-controls="handover-user-results"
+                aria-expanded={searchResults.length > 0}
               />
+              {searching && (
+                <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+                  <Loader2 className="w-3 h-3 animate-spin" /> Searching…
+                </p>
+              )}
+              {searchResults.length > 0 && (
+                <ul
+                  id="handover-user-results"
+                  role="listbox"
+                  className="rounded-xl border border-border bg-card shadow-sm overflow-hidden max-h-56 overflow-y-auto"
+                >
+                  {searchResults.map((person) => (
+                    <li key={person.id} role="option">
+                      <button
+                        type="button"
+                        className="w-full flex items-center gap-3 px-3 py-2.5 text-left hover:bg-muted/70 transition-colors"
+                        onClick={() => selectRecipient(person)}
+                      >
+                        {person.avatar_url ? (
+                          <img
+                            src={person.avatar_url}
+                            alt=""
+                            className="w-9 h-9 rounded-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-9 h-9 rounded-full bg-secondary/15 flex items-center justify-center">
+                            <User className="w-4 h-4 text-secondary" />
+                          </div>
+                        )}
+                        <span className="min-w-0">
+                          <span className="block font-medium truncate text-sm">
+                            {person.display_name || person.username}
+                          </span>
+                          <span className="block text-xs text-muted-foreground truncate">
+                            @{person.username}
+                          </span>
+                        </span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {!searching && username.trim().length > 0 && searchResults.length === 0 && (
+                <p className="text-xs text-muted-foreground">No matches yet. Try another name.</p>
+              )}
             </div>
             <div className="rounded-2xl bg-muted/60 p-4 text-sm text-muted-foreground flex gap-2">
               <ShieldCheck className="w-4 h-4 shrink-0 mt-0.5 text-accent" />
