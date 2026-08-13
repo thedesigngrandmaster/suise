@@ -15,6 +15,8 @@ import NotFound from "./pages/NotFound";
 import TestAlbums from "@/pages/TestAlbums";
 import WalletPage from "./pages/Wallet";
 import Earn from "./pages/Earn";
+import Privacy from "./pages/Privacy";
+import Terms from "./pages/Terms";
 
 const App = () => (
   <Routes>
@@ -36,6 +38,8 @@ const App = () => (
     <Route path="/:username" element={<Profile />} />
     <Route path="*" element={<NotFound />} />
     <Route path="/test-albums" element={<TestAlbums />} />
+    <Route path="/privacy" element={<Privacy />} />
+    <Route path="/terms" element={<Terms />} />
   </Routes>
 );
 
