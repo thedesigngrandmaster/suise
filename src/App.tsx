@@ -17,29 +17,119 @@ import WalletPage from "./pages/Wallet";
 import Earn from "./pages/Earn";
 import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
+import { ProtectedRoute } from "./components/ProtectedRoute";
 
 const App = () => (
   <Routes>
+    {/* Public */}
     <Route path="/" element={<Index />} />
     <Route path="/home" element={<Index />} />
     <Route path="/auth" element={<Auth />} />
-    <Route path="/vault" element={<Vault />} />
-    <Route path="/explore" element={<Explore />} />
-    <Route path="/connect" element={<Connect />} />
-    <Route path="/wallet" element={<WalletPage />} />
-    <Route path="/earn" element={<Earn />} />
-    <Route path="/settings" element={<Settings />} />
-    <Route path="/chat" element={<Chat />} />
-    <Route path="/chat/:partnerId" element={<Chat />} />
-    <Route path="/album/:albumId" element={<AlbumDetail />} />
-    <Route path="/demo-album/:albumId" element={<DemoAlbumDetail />} />
-    <Route path="/profile" element={<Profile />} />
-    <Route path="/notifications" element={<Notifications />} />
-    <Route path="/:username" element={<Profile />} />
-    <Route path="*" element={<NotFound />} />
-    <Route path="/test-albums" element={<TestAlbums />} />
     <Route path="/privacy" element={<Privacy />} />
     <Route path="/terms" element={<Terms />} />
+    <Route path="/demo-album/:albumId" element={<DemoAlbumDetail />} />
+
+    {/* Private — require login */}
+    <Route
+      path="/vault"
+      element={
+        <ProtectedRoute>
+          <Vault />
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/explore"
+      element={
+        <ProtectedRoute>
+          <Explore />
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/connect"
+      element={
+        <ProtectedRoute>
+          <Connect />
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/wallet"
+      element={
+        <ProtectedRoute>
+          <WalletPage />
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/earn"
+      element={
+        <ProtectedRoute>
+          <Earn />
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/settings"
+      element={
+        <ProtectedRoute>
+          <Settings />
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/chat"
+      element={
+        <ProtectedRoute>
+          <Chat />
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/chat/:partnerId"
+      element={
+        <ProtectedRoute>
+          <Chat />
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/album/:albumId"
+      element={
+        <ProtectedRoute>
+          <AlbumDetail />
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/profile"
+      element={
+        <ProtectedRoute>
+          <Profile />
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/notifications"
+      element={
+        <ProtectedRoute>
+          <Notifications />
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/test-albums"
+      element={
+        <ProtectedRoute>
+          <TestAlbums />
+        </ProtectedRoute>
+      }
+    />
+
+    {/* Public profile by username — keep after static routes */}
+    <Route path="/:username" element={<Profile />} />
+    <Route path="*" element={<NotFound />} />
   </Routes>
 );
 
